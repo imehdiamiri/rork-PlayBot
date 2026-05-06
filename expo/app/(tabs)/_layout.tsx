@@ -90,8 +90,14 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
                   target: route.key,
                   canPreventDefault: true,
                 });
-                if (!isFocused && !event.defaultPrevented) {
-                  navigation.navigate(route.name);
+                if (!event.defaultPrevented) {
+                  if (route.name === 'index') {
+                    navigation.navigate(route.name, { defaultTab: 'Games', resetAt: Date.now() });
+                    return;
+                  }
+                  if (!isFocused) {
+                    navigation.navigate(route.name);
+                  }
                 }
               };
 

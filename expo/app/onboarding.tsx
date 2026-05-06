@@ -1,200 +1,249 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
-  TextInput,
-  TouchableOpacity,
+  Dimensions,
+  Keyboard,
   KeyboardAvoidingView,
   Platform,
+  Pressable,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
   TouchableWithoutFeedback,
-  Keyboard,
-  Dimensions,
-  ScrollView,
+  View,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
 import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withSpring,
-  withSequence,
-  interpolate,
   Extrapolate,
+  interpolate,
   useAnimatedScrollHandler,
+  useAnimatedStyle,
+  useSharedValue,
+  withDelay,
+  withSpring,
+  withTiming,
 } from 'react-native-reanimated';
 
-import { Colors, Typography } from '../src/theme/Colors';
-import { AppBackgroundView } from '@/src/components/AppBackgroundView';
-import { useSettingsStore } from '../src/store/useSettingsStore';
 import { IconSymbol } from '@/components/ui/icon-symbol';
+import { AppBackgroundView } from '@/src/components/AppBackgroundView';
 import { GlowView } from '@/src/components/ui/GlowView';
-
-// Platform-safe BlurView
-let BlurViewComponent: any = null;
-if (Platform.OS === 'ios') {
-  try { BlurViewComponent = require('expo-blur').BlurView; } catch {}
-}
+import { useSettingsStore } from '@/src/store/useSettingsStore';
+import { Colors } from '@/src/theme/Colors';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const PAGES = [0, 1, 2, 3] as const;
 
-const BouncingIcon = ({ children, active }: { children: React.ReactNode; active: boolean }) => {
-  const scale = useSharedValue(1);
+type PageIndex = 0 | 1 | 2 | 3;
+
+function EnterStage({ active, delay = 0, children }: { active: boolean; delay?: number; children: React.ReactNode }) {
+  const progress = useSharedValue(active ? 1 : 0);
 
   useEffect(() => {
-    if (active) {
-      scale.value = withSequence(
-        withSpring(1.2, { damping: 5, stiffness: 200 }),
-        withSpring(1, { damping: 5, stiffness: 200 })
-      );
-    }
-  }, [active]);
+    progress.value = active ? withDelay(delay, withSpring(1, { damping: 15, stiffness: 120 })) : withTiming(0, { duration: 140 });
+  }, [active, delay, progress]);
 
   const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
+    opacity: progress.value,
+    transform: [
+      { translateY: interpolate(progress.value, [0, 1], [28, 0], Extrapolate.CLAMP) },
+      { scale: interpolate(progress.value, [0, 1], [0.94, 1], Extrapolate.CLAMP) },
+    ],
   }));
 
   return <Animated.View style={animatedStyle}>{children}</Animated.View>;
-};
+}
+
+function BoredCrewIllustration({ active }: { active: boolean }) {
+  return (
+    <EnterStage active={active}>
+      <View style={styles.sceneCard}>
+        <GlowView color="rgba(255, 159, 10, 0.38)" size={260} style={styles.sceneGlow} />
+        <View style={styles.floorOval} />
+        <Character x={34} y={78} color="#FFB86B" mood="bored" />
+        <Character x={136} y={52} color="#6EE7F9" mood="bored" />
+        <Character x={238} y={80} color="#FCA5D6" mood="bored" />
+        <View style={styles.deadPhone}>
+          <IconSymbol name="iphone" size={18} color="rgba(255,255,255,0.42)" />
+        </View>
+        <Text style={styles.zzz}>zzz</Text>
+      </View>
+    </EnterStage>
+  );
+}
+
+function HappyCrewIllustration({ active }: { active: boolean }) {
+  return (
+    <EnterStage active={active}>
+      <View style={[styles.sceneCard, styles.partyScene]}>
+        <GlowView color="rgba(48, 209, 88, 0.42)" size={280} style={styles.sceneGlow} />
+        <View style={styles.confettiA} />
+        <View style={styles.confettiB} />
+        <View style={styles.confettiC} />
+        <View style={styles.floorOval} />
+        <Character x={30} y={74} color="#FFB86B" mood="happy" />
+        <Character x={136} y={46} color="#6EE7F9" mood="happy" crown />
+        <Character x={242} y={74} color="#FCA5D6" mood="happy" />
+        <View style={styles.sparkBadge}>
+          <IconSymbol name="sparkles" size={26} color="#fff" />
+        </View>
+      </View>
+    </EnterStage>
+  );
+}
+
+function NameIllustration({ active }: { active: boolean }) {
+  return (
+    <EnterStage active={active}>
+      <View style={styles.namePoster}>
+        <View style={styles.nameBubbleOne} />
+        <View style={styles.nameBubbleTwo} />
+        <IconSymbol name="person.crop.circle.badge.plus" size={72} color="#fff" />
+        <Text style={styles.namePosterText}>PLAYER PASS</Text>
+      </View>
+    </EnterStage>
+  );
+}
+
+function HeroIllustration({ active, name }: { active: boolean; name: string }) {
+  const heroName = name.trim() || 'Hero';
+  return (
+    <EnterStage active={active}>
+      <View style={styles.heroPoster}>
+        <View style={styles.capeLeft} />
+        <View style={styles.capeRight} />
+        <View style={styles.heroHead} />
+        <View style={styles.heroBody}>
+          <View style={styles.chestBadge}>
+            <Text style={styles.chestText} numberOfLines={1}>{heroName.slice(0, 9)}</Text>
+          </View>
+        </View>
+        <View style={styles.heroArmLeft} />
+        <View style={styles.heroArmRight} />
+      </View>
+    </EnterStage>
+  );
+}
+
+function Character({ x, y, color, mood, crown }: { x: number; y: number; color: string; mood: 'bored' | 'happy'; crown?: boolean }) {
+  return (
+    <View style={[styles.character, { left: x, top: y }]}> 
+      {crown ? <Text style={styles.crown}>✦</Text> : null}
+      <View style={[styles.head, { backgroundColor: color }]}>
+        <View style={styles.eyeLeft} />
+        <View style={styles.eyeRight} />
+        <View style={[styles.mouth, mood === 'happy' ? styles.mouthHappy : styles.mouthBored]} />
+      </View>
+      <View style={[styles.body, { backgroundColor: color }]} />
+    </View>
+  );
+}
+
+function IndicatorDot({ index, scrollX }: { index: number; scrollX: Animated.SharedValue<number> }) {
+  const animatedStyle = useAnimatedStyle(() => ({
+    width: interpolate(scrollX.value, [(index - 1) * SCREEN_WIDTH, index * SCREEN_WIDTH, (index + 1) * SCREEN_WIDTH], [8, 30, 8], Extrapolate.CLAMP),
+    opacity: interpolate(scrollX.value, [(index - 1) * SCREEN_WIDTH, index * SCREEN_WIDTH, (index + 1) * SCREEN_WIDTH], [0.3, 1, 0.3], Extrapolate.CLAMP),
+  }));
+  return <Animated.View style={[styles.indicator, animatedStyle]} />;
+}
 
 export default function OnboardingScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { setHasCompletedOnboarding, setPlayerName } = useSettingsStore();
-
-  const [currentPage, setCurrentPage] = useState(0);
-  const [name, setName] = useState('');
-  
-  const scrollViewRef = useRef<any>(null);
+  const [currentPage, setCurrentPage] = useState<PageIndex>(0);
+  const [name, setName] = useState<string>('');
+  const scrollViewRef = useRef<Animated.ScrollView>(null);
   const inputRef = useRef<TextInput>(null);
   const scrollX = useSharedValue(0);
 
   useEffect(() => {
-    if (currentPage === 2) {
-      setTimeout(() => {
-        inputRef.current?.focus();
-      }, 500);
-    }
+    if (currentPage === 2) setTimeout(() => inputRef.current?.focus(), 460);
   }, [currentPage]);
 
   const scrollHandler = useAnimatedScrollHandler({
-    onScroll: (event) => {
-      scrollX.value = event.contentOffset.x;
-    },
+    onScroll: (event) => { scrollX.value = event.contentOffset.x; },
   });
 
-  const handleMomentumScrollEnd = (event: any) => {
-    const offsetX = event.nativeEvent.contentOffset.x;
-    const page = Math.round(offsetX / SCREEN_WIDTH);
+  const goToPage = useCallback((page: PageIndex) => {
+    scrollViewRef.current?.scrollTo({ x: page * SCREEN_WIDTH, animated: true });
     setCurrentPage(page);
-  };
-
-  const goToNextPage = () => {
-    if (currentPage < 2) {
-      const nextPage = currentPage + 1;
-      scrollViewRef.current?.scrollTo({ x: nextPage * SCREEN_WIDTH, animated: true });
-      setCurrentPage(nextPage);
-    }
-  };
-
-  const handleNameChange = useCallback((text: string) => {
-    setName(text);
   }, []);
 
-  const handleComplete = () => {
+  const goNext = useCallback(() => {
+    if (currentPage < 3) goToPage((currentPage + 1) as PageIndex);
+  }, [currentPage, goToPage]);
+
+  const complete = useCallback(() => {
     const trimmed = name.trim();
     if (trimmed.length < 2) return;
-    
     Keyboard.dismiss();
     setPlayerName(trimmed);
     setHasCompletedOnboarding(true);
-    // Explicitly navigate — don't rely on _layout auto-redirect
-    router.replace('/auth');
-  };
-
-  // Pages are defined outside the component (see below) to prevent re-mounting on state change
+    router.replace('/(tabs)');
+  }, [name, router, setHasCompletedOnboarding, setPlayerName]);
 
   const isNameValid = name.trim().length >= 2;
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-    >
+    <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <View style={styles.container}>
           <AppBackgroundView />
-          
           <Animated.ScrollView
             ref={scrollViewRef}
             horizontal
             pagingEnabled
+            bounces={false}
             showsHorizontalScrollIndicator={false}
             onScroll={scrollHandler}
             scrollEventThrottle={16}
-            onMomentumScrollEnd={handleMomentumScrollEnd}
             keyboardShouldPersistTaps="handled"
+            onMomentumScrollEnd={(event) => setCurrentPage(Math.round(event.nativeEvent.contentOffset.x / SCREEN_WIDTH) as PageIndex)}
           >
-            <WelcomePage currentPage={currentPage} />
-            <ShowcasePage currentPage={currentPage} />
-            <NameEntryPage
-              currentPage={currentPage}
-              inputRef={inputRef}
-              name={name}
-              onChangeName={handleNameChange}
-            />
+            <OnboardPage active={currentPage === 0} eyebrow="دورهمی خاموشه؟" title="تو جمع نشستین و حوصله‌تون سر رفته؟" subtitle="PlayVirals همین لحظه سکوت جمع رو می‌شکنه.">
+              <BoredCrewIllustration active={currentPage === 0} />
+            </OnboardPage>
+            <OnboardPage active={currentPage === 1} eyebrow="نگران نباشید" title="PlayVirals اومده جمع‌تونو بترکونه" subtitle="بازی‌های سریع، خنده‌دار و آماده برای هر دورهمی.">
+              <HappyCrewIllustration active={currentPage === 1} />
+            </OnboardPage>
+            <OnboardPage active={currentPage === 2} eyebrow="اول تو" title="اسمتو بگو" subtitle="تا تو بازی‌ها مستقیم با اسم خودت صدات کنیم.">
+              <NameIllustration active={currentPage === 2} />
+              <View style={styles.inputShell}>
+                <TextInput
+                  ref={inputRef}
+                  value={name}
+                  onChangeText={setName}
+                  placeholder="مثلا آرش"
+                  placeholderTextColor="rgba(255,255,255,0.35)"
+                  style={styles.input}
+                  autoCapitalize="words"
+                  autoCorrect={false}
+                  returnKeyType="done"
+                  onSubmitEditing={Keyboard.dismiss}
+                />
+              </View>
+            </OnboardPage>
+            <OnboardPage active={currentPage === 3} eyebrow="قهرمان جمع" title={`آهای ${name.trim() || 'رفیق'}، آماده‌ای جمعو بترکونی؟`} subtitle="وقتشه اولین بازی رو شروع کنیم.">
+              <HeroIllustration active={currentPage === 3} name={name} />
+            </OnboardPage>
           </Animated.ScrollView>
 
-          {/* Bottom Controls */}
-          <View style={[styles.bottomControls, { paddingBottom: insets.bottom + 48 }]}>
-            <View style={styles.indicators}>
-              {[0, 1, 2].map((i) => {
-                const indicatorStyle = useAnimatedStyle(() => {
-                  const width = interpolate(
-                    scrollX.value,
-                    [(i - 1) * SCREEN_WIDTH, i * SCREEN_WIDTH, (i + 1) * SCREEN_WIDTH],
-                    [8, 28, 8],
-                    Extrapolate.CLAMP
-                  );
-                  const opacity = interpolate(
-                    scrollX.value,
-                    [(i - 1) * SCREEN_WIDTH, i * SCREEN_WIDTH, (i + 1) * SCREEN_WIDTH],
-                    [0.25, 1, 0.25],
-                    Extrapolate.CLAMP
-                  );
-                  return { width, opacity };
-                });
-                return <Animated.View key={i} style={[styles.indicator, indicatorStyle]} />;
-              })}
-            </View>
-
-            <View style={styles.actionRow}>
-              {currentPage < 2 ? (
-                <View style={styles.nextButtonWrapper}>
-                  <TouchableOpacity style={styles.nextButton} onPress={goToNextPage}>
-                    <Text style={styles.nextButtonText}>Next</Text>
-                    <IconSymbol name="chevron.right" size={12} color="white" weight="bold" />
-                  </TouchableOpacity>
-                </View>
-              ) : (
-                <TouchableOpacity
-                  style={[styles.playButton, !isNameValid && styles.playButtonDisabled]}
-                  disabled={!isNameValid}
-                  onPress={handleComplete}
-                >
-                  <LinearGradient
-                    colors={isNameValid ? [Colors.purple, Colors.pink] : ['rgba(150,150,150,0.6)', 'rgba(150,150,150,0.5)']}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 0 }}
-                    style={StyleSheet.absoluteFill}
-                  />
-                  <Text style={styles.playButtonText}>Let's Play!</Text>
-                  <IconSymbol name="play.fill" size={16} color="white" />
-                </TouchableOpacity>
-              )}
-            </View>
+          <View style={[styles.bottomControls, { paddingBottom: insets.bottom + 36 }]}> 
+            <View style={styles.indicators}>{PAGES.map((i) => <IndicatorDot key={i} index={i} scrollX={scrollX} />)}</View>
+            {currentPage === 2 && !isNameValid ? (
+              <Text style={styles.helper}>حداقل ۲ حرف وارد کن</Text>
+            ) : <View style={styles.helperSpace} />}
+            <Pressable
+              disabled={currentPage === 2 && !isNameValid}
+              onPress={currentPage === 3 ? complete : goNext}
+              style={({ pressed }) => [styles.primaryButton, pressed && styles.primaryButtonPressed, currentPage === 2 && !isNameValid && styles.primaryButtonDisabled]}
+            >
+              <LinearGradient colors={currentPage === 3 ? ['#FF2D55', '#FF9F0A'] : ['#0A84FF', '#30D158']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={StyleSheet.absoluteFill} />
+              <Text style={styles.primaryButtonText}>{currentPage === 3 ? 'بریم بازی' : 'بعدی'}</Text>
+              <IconSymbol name={currentPage === 3 ? 'gamecontroller.fill' : 'chevron.right'} size={17} color="#fff" />
+            </Pressable>
           </View>
         </View>
       </TouchableWithoutFeedback>
@@ -202,306 +251,70 @@ export default function OnboardingScreen() {
   );
 }
 
-// --- Page 1: Welcome (defined outside to prevent re-mounting) ---
-const WelcomePage = React.memo(({ currentPage }: { currentPage: number }) => (
-  <View style={styles.page}>
-    <View style={styles.iconSection}>
-      <GlowView color="rgba(0, 122, 255, 0.6)" size={320} style={{ position: 'absolute' }} />
-      <BouncingIcon active={currentPage === 0}>
-        <LinearGradient
-          colors={[Colors.blue, Colors.cyan]}
-          style={styles.iconGradient}
-        >
-          <IconSymbol name="gamecontroller.fill" size={68} color="white" />
-        </LinearGradient>
-      </BouncingIcon>
+function OnboardPage({ active, eyebrow, title, subtitle, children }: { active: boolean; eyebrow: string; title: string; subtitle: string; children: React.ReactNode }) {
+  return (
+    <View style={styles.page}>
+      <View style={styles.artWrap}>{children}</View>
+      <EnterStage active={active} delay={100}>
+        <View style={styles.copyCard}>
+          <Text style={styles.eyebrow}>{eyebrow}</Text>
+          <Text style={styles.title}>{title}</Text>
+          <Text style={styles.subtitle}>{subtitle}</Text>
+        </View>
+      </EnterStage>
     </View>
-    <View style={styles.textSection}>
-      <Text style={styles.title2}>Welcome to</Text>
-      <Text style={styles.viralTitle}>PlayVirals</Text>
-      <Text style={styles.bodyText}>
-        The ultimate party game collection.{'\n'}Play with friends, compete, and have fun!
-      </Text>
-    </View>
-  </View>
-));
-
-// --- Page 2: Showcase ---
-const ShowcasePage = React.memo(({ currentPage }: { currentPage: number }) => (
-  <View style={styles.page}>
-    <View style={styles.iconSection}>
-      <GlowView color="rgba(52, 199, 89, 0.6)" size={320} style={{ position: 'absolute' }} />
-      <BouncingIcon active={currentPage === 1}>
-        <LinearGradient
-          colors={[Colors.green, Colors.mint]}
-          style={styles.iconGradient}
-        >
-          <IconSymbol name="sparkles" size={68} color="white" />
-        </LinearGradient>
-      </BouncingIcon>
-    </View>
-    <View style={styles.textSection}>
-      <Text style={styles.showcaseTitle}>All the Viral Games</Text>
-      <Text style={styles.title1}>In One Place</Text>
-      <Text style={styles.bodyText}>
-        Every trending party game you've seen{'\n'}on social media — ready to play instantly{'\n'}with your friends. No setup needed.
-      </Text>
-      <View style={styles.pillsRow}>
-        <FeaturePill icon="person.3.fill" text="Multiplayer" />
-        <FeaturePill icon="iphone" text="One Device" />
-        <FeaturePill icon="bolt.fill" text="Instant" />
-      </View>
-    </View>
-  </View>
-));
-
-// --- Page 3: Name Entry ---
-interface NameEntryPageProps {
-  currentPage: number;
-  inputRef: React.RefObject<TextInput | null>;
-  name: string;
-  onChangeName: (text: string) => void;
+  );
 }
 
-const NameEntryPage = React.memo(({ currentPage, inputRef, name, onChangeName }: NameEntryPageProps) => (
-  <View style={styles.page}>
-    <View style={styles.iconSection}>
-      <GlowView color="rgba(175, 82, 222, 0.6)" size={320} style={{ position: 'absolute' }} />
-      <BouncingIcon active={currentPage === 2}>
-        <LinearGradient
-          colors={[Colors.purple, Colors.pink]}
-          style={styles.iconGradient}
-        >
-          <IconSymbol name="person.crop.circle.badge.plus" size={60} color="white" />
-        </LinearGradient>
-      </BouncingIcon>
-    </View>
-    <View style={styles.textSection}>
-      <Text style={styles.title1}>What's Your Name?</Text>
-      <Text style={styles.bodyText}>
-        This will be your default player name{'\n'}in party games.
-      </Text>
-      
-      <View style={styles.inputWrapper}>
-        <View style={styles.inputContainer}>
-          {Platform.OS === 'ios' && BlurViewComponent ? (
-            <BlurViewComponent intensity={60} tint="dark" style={StyleSheet.absoluteFill} />
-          ) : (
-            <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(20,20,30,0.92)' }]} />
-          )}
-          <TextInput
-            ref={inputRef}
-            style={styles.input}
-            placeholder="Enter your name"
-            placeholderTextColor="rgba(255,255,255,0.3)"
-            value={name}
-            onChangeText={onChangeName}
-            autoCapitalize="words"
-            autoCorrect={false}
-            returnKeyType="done"
-            onSubmitEditing={() => Keyboard.dismiss()}
-          />
-        </View>
-        <Text style={styles.caption}>You can change this anytime</Text>
-      </View>
-    </View>
-  </View>
-));
-
-const FeaturePill = ({ icon, text }: { icon: any; text: string }) => (
-  <View style={styles.pill}>
-    <IconSymbol name={icon} size={20} color={Colors.mint} weight="semibold" />
-    <Text style={styles.pillText}>{text}</Text>
-  </View>
-);
-
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.black,
-  },
-  page: {
-    width: SCREEN_WIDTH,
-    height: '100%',
-    justifyContent: 'center',
-    paddingBottom: 160,
-  },
-  iconSection: {
-    height: 160,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  halo: {
-    position: 'absolute',
-    width: 200,
-    height: 200,
-    borderRadius: 100,
-    transform: [{ scale: 1.5 }],
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 0 },
-        shadowOpacity: 1,
-        shadowRadius: 30,
-      },
-    }),
-  },
-  iconGradient: {
-    width: 100,
-    height: 100,
-    borderRadius: 32,
-    justifyContent: 'center',
-    alignItems: 'center',
-    ...Platform.select({
-      ios: {
-        shadowColor: Colors.blue,
-        shadowOffset: { width: 0, height: 8 },
-        shadowOpacity: 0.5,
-        shadowRadius: 20,
-      },
-    }),
-  },
-  textSection: {
-    alignItems: 'center',
-    paddingHorizontal: 32,
-    marginTop: 20,
-  },
-  title2: {
-    fontFamily: 'Viral-Black',
-    fontSize: 22,
-    color: Colors.secondary,
-    marginBottom: 14,
-  },
-  viralTitle: {
-    fontFamily: Typography.viralTitle.fontFamily,
-    fontSize: 34,
-    color: Colors.white,
-    marginBottom: 4,
-  },
-  title1: {
-    fontFamily: 'Viral-Black',
-    fontSize: 28,
-    color: Colors.white,
-    marginBottom: 14,
-  },
-  showcaseTitle: {
-    fontFamily: 'Viral-Black',
-    fontSize: 34,
-    color: Colors.mint,
-    marginBottom: 10,
-    textAlign: 'center',
-  },
-  bodyText: {
-    fontSize: 16,
-    color: Colors.secondary,
-    textAlign: 'center',
-    lineHeight: 24,
-  },
-  pillsRow: {
-    flexDirection: 'row',
-    gap: 20,
-    marginTop: 16,
-  },
-  pill: {
-    alignItems: 'center',
-    gap: 8,
-  },
-  pillText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: Colors.secondary,
-  },
-  inputWrapper: {
-    width: '100%',
-    marginTop: 28,
-    alignItems: 'center',
-  },
-  inputContainer: {
-    width: '100%',
-    borderRadius: 16,
-    overflow: 'hidden',
-    borderColor: Colors.purple,
-    borderWidth: 1.5,
-  },
-  input: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: Colors.white,
-    textAlign: 'center',
-    paddingVertical: 16,
-    paddingHorizontal: 24,
-  },
-  caption: {
-    marginTop: 8,
-    fontSize: 12,
-    color: Colors.tertiary,
-  },
-  bottomControls: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    paddingHorizontal: 24,
-    gap: 20,
-  },
-  indicators: {
-    flexDirection: 'row',
-    gap: 8,
-    justifyContent: 'center',
-  },
-  indicator: {
-    height: 8,
-    backgroundColor: Colors.white,
-    borderRadius: 4,
-  },
-  actionRow: {
-    height: 56,
-    justifyContent: 'center',
-  },
-  nextButtonWrapper: {
-    alignItems: 'flex-end',
-  },
-  nextButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.blue,
-    paddingHorizontal: 28,
-    paddingVertical: 13,
-    borderRadius: 24,
-    gap: 6,
-  },
-  nextButtonText: {
-    color: Colors.white,
-    fontSize: 15,
-    fontWeight: '600',
-  },
-  playButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 16,
-    height: 56,
-    gap: 10,
-    overflow: 'hidden',
-    ...Platform.select({
-      ios: {
-        shadowColor: Colors.purple,
-        shadowOffset: { width: 0, height: 6 },
-        shadowOpacity: 0.4,
-        shadowRadius: 12,
-      },
-      android: {
-        elevation: 8,
-      },
-    }),
-  },
-  playButtonDisabled: {
-    shadowOpacity: 0,
-  },
-  playButtonText: {
-    fontFamily: 'Viral-Black',
-    color: Colors.white,
-    fontSize: 17,
-  },
+  container: { flex: 1, backgroundColor: Colors.black },
+  page: { width: SCREEN_WIDTH, flex: 1, justifyContent: 'center', paddingHorizontal: 22, paddingBottom: 160, paddingTop: 30 },
+  artWrap: { alignItems: 'center', justifyContent: 'center', minHeight: 290 },
+  sceneCard: { width: 330, height: 260, borderRadius: 42, backgroundColor: 'rgba(255,255,255,0.075)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.14)', overflow: 'hidden' },
+  partyScene: { backgroundColor: 'rgba(28, 48, 38, 0.72)' },
+  sceneGlow: { position: 'absolute', left: 35, top: 5 },
+  floorOval: { position: 'absolute', left: 40, right: 40, bottom: 34, height: 46, borderRadius: 999, backgroundColor: 'rgba(255,255,255,0.09)' },
+  character: { position: 'absolute', width: 58, alignItems: 'center' },
+  head: { width: 54, height: 54, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
+  body: { width: 68, height: 72, borderTopLeftRadius: 26, borderTopRightRadius: 26, borderBottomLeftRadius: 18, borderBottomRightRadius: 18, marginTop: -4, opacity: 0.92 },
+  eyeLeft: { position: 'absolute', left: 16, top: 20, width: 5, height: 5, borderRadius: 3, backgroundColor: '#20202A' },
+  eyeRight: { position: 'absolute', right: 16, top: 20, width: 5, height: 5, borderRadius: 3, backgroundColor: '#20202A' },
+  mouth: { position: 'absolute', bottom: 15, width: 18, height: 8, borderWidth: 2, borderColor: '#20202A' },
+  mouthHappy: { borderTopWidth: 0, borderBottomLeftRadius: 18, borderBottomRightRadius: 18 },
+  mouthBored: { height: 2, borderWidth: 0, backgroundColor: '#20202A', borderRadius: 2 },
+  crown: { position: 'absolute', top: -20, zIndex: 2, color: '#FFD60A', fontSize: 22, fontWeight: '900' },
+  deadPhone: { position: 'absolute', left: 151, bottom: 56, width: 36, height: 48, borderRadius: 10, borderWidth: 2, borderColor: 'rgba(255,255,255,0.28)', alignItems: 'center', justifyContent: 'center', transform: [{ rotate: '-12deg' }] },
+  zzz: { position: 'absolute', right: 42, top: 42, color: 'rgba(255,255,255,0.38)', fontSize: 24, fontWeight: '900' },
+  confettiA: { position: 'absolute', left: 48, top: 42, width: 12, height: 28, borderRadius: 6, backgroundColor: '#FF2D55', transform: [{ rotate: '24deg' }] },
+  confettiB: { position: 'absolute', right: 58, top: 35, width: 14, height: 14, borderRadius: 4, backgroundColor: '#FFD60A', transform: [{ rotate: '18deg' }] },
+  confettiC: { position: 'absolute', left: 154, top: 28, width: 36, height: 8, borderRadius: 6, backgroundColor: '#0A84FF', transform: [{ rotate: '-18deg' }] },
+  sparkBadge: { position: 'absolute', right: 30, bottom: 34, width: 58, height: 58, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: '#30D158' },
+  namePoster: { width: 210, height: 210, borderRadius: 56, backgroundColor: '#0A84FF', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', transform: [{ rotate: '-5deg' }] },
+  nameBubbleOne: { position: 'absolute', width: 118, height: 118, borderRadius: 59, backgroundColor: 'rgba(255,255,255,0.16)', left: -24, top: -20 },
+  nameBubbleTwo: { position: 'absolute', width: 92, height: 92, borderRadius: 46, backgroundColor: 'rgba(48,209,88,0.55)', right: -16, bottom: -12 },
+  namePosterText: { marginTop: 14, color: '#fff', fontFamily: 'Viral-Black', fontSize: 15, letterSpacing: 1.2 },
+  heroPoster: { width: 270, height: 270, alignItems: 'center', justifyContent: 'center' },
+  capeLeft: { position: 'absolute', left: 34, top: 92, width: 102, height: 132, backgroundColor: '#FF2D55', borderTopLeftRadius: 80, borderBottomLeftRadius: 36, transform: [{ rotate: '18deg' }] },
+  capeRight: { position: 'absolute', right: 34, top: 92, width: 102, height: 132, backgroundColor: '#FF375F', borderTopRightRadius: 80, borderBottomRightRadius: 36, transform: [{ rotate: '-18deg' }] },
+  heroHead: { width: 72, height: 72, borderRadius: 30, backgroundColor: '#FFD3A6', marginBottom: -8, zIndex: 3 },
+  heroBody: { width: 142, height: 138, borderRadius: 46, backgroundColor: '#0A84FF', alignItems: 'center', justifyContent: 'center', zIndex: 2 },
+  chestBadge: { width: 96, height: 58, borderRadius: 18, backgroundColor: '#FFD60A', alignItems: 'center', justifyContent: 'center', borderWidth: 4, borderColor: '#fff', transform: [{ rotate: '-4deg' }] },
+  chestText: { fontFamily: 'Viral-Black', fontSize: 15, color: '#111827' },
+  heroArmLeft: { position: 'absolute', left: 46, top: 128, width: 42, height: 100, borderRadius: 22, backgroundColor: '#0A84FF', transform: [{ rotate: '34deg' }] },
+  heroArmRight: { position: 'absolute', right: 46, top: 128, width: 42, height: 100, borderRadius: 22, backgroundColor: '#0A84FF', transform: [{ rotate: '-34deg' }] },
+  copyCard: { alignItems: 'center', paddingHorizontal: 10, marginTop: 12 },
+  eyebrow: { color: '#FFD60A', fontSize: 14, fontFamily: 'Viral-Black', marginBottom: 10 },
+  title: { color: '#fff', fontFamily: 'Viral-Black', fontSize: 30, lineHeight: 37, textAlign: 'center', marginBottom: 10 },
+  subtitle: { color: 'rgba(255,255,255,0.68)', fontSize: 16, lineHeight: 24, textAlign: 'center', fontWeight: '600' },
+  inputShell: { marginTop: 20, width: SCREEN_WIDTH - 72, height: 62, borderRadius: 24, overflow: 'hidden', backgroundColor: 'rgba(255,255,255,0.10)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.22)' },
+  input: { flex: 1, textAlign: 'center', color: '#fff', fontFamily: 'Viral-Black', fontSize: 23, paddingHorizontal: 20 },
+  bottomControls: { position: 'absolute', left: 24, right: 24, bottom: 0, gap: 10 },
+  indicators: { flexDirection: 'row', justifyContent: 'center', gap: 8, height: 10, alignItems: 'center' },
+  indicator: { height: 8, borderRadius: 999, backgroundColor: '#fff' },
+  helper: { textAlign: 'center', color: 'rgba(255,255,255,0.54)', fontSize: 12, fontWeight: '700' },
+  helperSpace: { height: 15 },
+  primaryButton: { height: 58, borderRadius: 24, overflow: 'hidden', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, shadowColor: '#0A84FF', shadowOpacity: 0.42, shadowRadius: 16, shadowOffset: { width: 0, height: 8 }, elevation: 8 },
+  primaryButtonPressed: { transform: [{ scale: 0.98 }] },
+  primaryButtonDisabled: { opacity: 0.45 },
+  primaryButtonText: { color: '#fff', fontFamily: 'Viral-Black', fontSize: 18 },
 });
-

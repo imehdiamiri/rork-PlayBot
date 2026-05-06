@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { StyleSheet, View, Text, ScrollView, TouchableOpacity, useWindowDimensions, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 
 import { AppBackgroundView } from '@/src/components/AppBackgroundView';
 import { LiquidGlass } from '@/src/components/LiquidGlass';
@@ -14,10 +14,17 @@ import { OtherFunListView } from '@/src/components/games/OtherFunListView';
 
 export default function GamesScreen() {
   const router = useRouter();
+  const params = useLocalSearchParams<{ defaultTab?: string; resetAt?: string }>();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const [selectedLibraryTab, setSelectedLibraryTab] = useState<'Games' | 'Ideas'>('Games');
   const [selectedModeFilter, setSelectedModeFilter] = useState<GameMode | null>(null);
+
+  useEffect(() => {
+    if (params.defaultTab === 'Games') {
+      setSelectedLibraryTab('Games');
+    }
+  }, [params.defaultTab, params.resetAt]);
 
   const filteredGames = GamesDefinitions.filter(game => 
     selectedModeFilter ? game.id.supportedModes.includes(selectedModeFilter) : true
