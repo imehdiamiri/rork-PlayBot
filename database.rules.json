@@ -47,7 +47,21 @@
             ".write": "auth != null && (auth.uid == $pid || data.parent().parent().child('hostId').val() == auth.uid)"
           }
         },
-        "status": { ".validate": "newData.isString()" }
+        "status": { ".validate": "newData.isString()" },
+        "gameState": {
+          ".write": "auth != null && data.parent().child('hostId').val() == auth.uid"
+        },
+        "actions": {
+          ".read": "auth != null",
+          "$actionKey": {
+            ".write": "auth != null && (!newData.exists() || newData.child('playerId').val() == auth.uid || data.parent().parent().child('hostId').val() == auth.uid)"
+          }
+        },
+        "presence": {
+          "$pid": {
+            ".write": "auth != null && (auth.uid == $pid || data.parent().parent().child('hostId').val() == auth.uid)"
+          }
+        }
       }
     },
 

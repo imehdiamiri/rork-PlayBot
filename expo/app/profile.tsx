@@ -52,7 +52,7 @@ export default function ProfileScreen() {
   const safeBack = () => { if (router.canGoBack()) { router.back(); } else { router.replace('/'); } };
   const isGuest = authAccount?.provider === 'guest';
   const { activeSession, exitActiveSession } = useGameStore();
-  const { restorePurchases } = usePaywallStore();
+  const { restorePurchases, packages, getSubscriptionPackages, getLifetimePackage, getStarPackages } = usePaywallStore();
   const { starsBalance: stars, isPremium } = useEconomyStore();
   const { isSoundEnabled, setSoundEnabled, isVibrationEnabled, setVibrationEnabled } = useSettingsStore();
 
@@ -206,20 +206,59 @@ export default function ProfileScreen() {
         </View>
         
         <View style={styles.plansContainer}>
-          <PlanRow title="Weekly" price="$4.99" stars="+40 ★ per period" color={Colors.blue} onPress={() => router.push('/paywall')} />
-          <PlanRow title="Monthly" price="$6.99" stars="+120 ★ per period" color={Colors.orange} onPress={() => router.push('/paywall')} />
-          <PlanRow title="Yearly" price="$29.99" stars="+500 ★ per period" color={Colors.purple} badge="BEST VALUE" onPress={() => router.push('/paywall')} />
-          <PlanRow title="Lifetime" price="$49.99" subtitle="One-time • Forever" color={Colors.red} onPress={() => router.push('/paywall')} />
+          {(() => {
+            const subs = getSubscriptionPackages();
+            const lifetime = getLifetimePackage();
+            const subColor: Record<string, string> = { WEEKLY: Colors.blue, MONTHLY: Colors.orange, ANNUAL: Colors.purple };
+            if (subs.length === 0 && !lifetime) {
+              return <Text style={styles.planSubtitle}>Plans appear here once the App Store finishes loading.</Text>;
+            }
+            return (
+              <>
+                {subs.map((p) => (
+                  <PlanRow
+                    key={p.identifier}
+                    title={p.product?.title || p.packageType}
+                    price={p.product?.priceString || ''}
+                    color={subColor[p.packageType as string] || Colors.blue}
+                    badge={p.packageType === 'ANNUAL' ? 'BEST VALUE' : undefined}
+                    onPress={() => router.push({ pathname: '/purchase-detail', params: { identifier: p.identifier } })}
+                  />
+                ))}
+                {lifetime && (
+                  <PlanRow
+                    title={lifetime.product?.title || 'Lifetime'}
+                    subtitle="One-time • Forever"
+                    price={lifetime.product?.priceString || ''}
+                    color={Colors.red}
+                    onPress={() => router.push({ pathname: '/purchase-detail', params: { identifier: lifetime.identifier } })}
+                  />
+                )}
+              </>
+            );
+          })()}
         </View>
       </SurfaceCard>
 
       <SurfaceCard>
         <SectionHeaderView title="Star Packs" subtitle="Tap to purchase." />
         <View style={styles.plansContainer}>
-          <PackRow title="50 Stars" price="$0.99" subtitle="Starter pack" onPress={() => router.push('/paywall')} />
-          <PackRow title="200 Stars" price="$2.99" discount="Save 25%" onPress={() => router.push('/paywall')} />
-          <PackRow title="400 Stars" price="$4.99" discount="Save 37%" onPress={() => router.push('/paywall')} />
-          <PackRow title="1000 Stars" price="$9.99" discount="Save 50%" isBest onPress={() => router.push('/paywall')} />
+          {(() => {
+            const packs = getStarPackages();
+            if (packs.length === 0) {
+              return <Text style={styles.planSubtitle}>Star packs appear here once the store loads.</Text>;
+            }
+            const biggestPriceCents = Math.max(...packs.map((p) => Number(p.product?.price ?? 0)));
+            return packs.map((p) => (
+              <PackRow
+                key={p.identifier}
+                title={p.product?.title || p.identifier}
+                price={p.product?.priceString || ''}
+                isBest={Number(p.product?.price ?? 0) === biggestPriceCents}
+                onPress={() => router.push({ pathname: '/purchase-detail', params: { identifier: p.identifier } })}
+              />
+            ));
+          })()}
         </View>
       </SurfaceCard>
 

@@ -1,20 +1,32 @@
 import { rtdb as database } from '../lib/firebase';
-import { ref, set, get, onValue, update, remove, push, onDisconnect, serverTimestamp } from 'firebase/database';
+import { ref, set, get, onValue, update, remove, push, onDisconnect } from 'firebase/database';
 
 /**
  * GameSyncService — Real-time game state synchronization for multi-device play.
- * Broadcasts turn data, phase transitions, scores, and player actions via Firebase RTDB.
- * 
- * Data structure under /rooms/{roomCode}/gameState/:
- *   phase: string               — current game phase
- *   currentPlayerIdx: number    — whose turn it is
- *   round: number              — current round
- *   scores: Record<pid, number> — live scores
- *   turnData: any              — game-specific turn payload
- *   timestamp: number          — server timestamp for ordering
- *   actions: {                 — player-submitted actions
- *     [actionId]: { playerId, type, data, timestamp }
- *   }
+ *
+ * Hardened multiplayer infrastructure:
+ *   - Monotonic `version` on every state broadcast so clients ignore stale snapshots.
+ *   - `lastUpdatedAt` server stamp for diagnostics and reconnect ordering.
+ *   - Action keys (push IDs) replace timestamp-based de-duplication so the host
+ *     never reprocesses the same action twice even after a reconnect.
+ *   - Presence heartbeat (5s interval) plus `onDisconnect` cleanup so the host
+ *     can detect dropped clients within ~10s.
+ *   - `getSnapshot()` lets reconnecting clients pull the authoritative state in
+ *     a single round-trip before subscribing to live updates.
+ *
+ * Data structure under /rooms/{roomCode}/:
+ *   gameState/
+ *     version: number              — incremented on every host broadcast
+ *     phase: string                — current game phase
+ *     currentPlayerIdx: number     — whose turn it is
+ *     round: number                — current round
+ *     scores: Record<pid, number>  — live scores
+ *     turnData: any                — game-specific snapshot (host-authoritative)
+ *     lastUpdatedAt: number        — wall-clock ms (host)
+ *   actions/                       — per-action push entries; host drains them
+ *     {actionKey}: { playerId, type, data, ts }
+ *   presence/
+ *     {pid}: { online: boolean, lastSeen: number }
  */
 
 export interface GameStatePayload {
@@ -23,70 +35,97 @@ export interface GameStatePayload {
   round: number;
   scores: Record<string, number>;
   turnData?: any;
-  timestamp?: number;
+  version?: number;
+  lastUpdatedAt?: number;
 }
 
 export interface PlayerAction {
   playerId: string;
-  type: string; // 'vote', 'guess', 'flip', 'tap', 'draw', 'answer', etc.
+  type: string;
   data: any;
-  timestamp: number;
+  ts: number;
 }
+
+const HEARTBEAT_MS = 5000;
+const STALE_AFTER_MS = 12000;
 
 class GameSyncService {
   private listeners: Map<string, () => void> = new Map();
+  private heartbeats: Map<string, ReturnType<typeof setInterval>> = new Map();
+  private versions: Map<string, number> = new Map();
 
   /** Initialize game state for a room (host only) */
   async initGameState(roomCode: string, initialState: GameStatePayload): Promise<void> {
     const stateRef = ref(database, `rooms/${roomCode}/gameState`);
+    const version = 1;
+    this.versions.set(roomCode, version);
     await set(stateRef, {
       ...initialState,
-      timestamp: Date.now(),
+      version,
+      lastUpdatedAt: Date.now(),
     });
   }
 
-  /** Update game phase / turn / scores (host broadcasts to all) */
+  /** Broadcast a partial state update (host only). Bumps the monotonic version. */
   async broadcastState(roomCode: string, partialState: Partial<GameStatePayload>): Promise<void> {
     const stateRef = ref(database, `rooms/${roomCode}/gameState`);
+    const next = (this.versions.get(roomCode) ?? 0) + 1;
+    this.versions.set(roomCode, next);
     await update(stateRef, {
       ...partialState,
-      timestamp: Date.now(),
+      version: next,
+      lastUpdatedAt: Date.now(),
     });
   }
 
-  /** Push a player action (vote, guess, tap, etc.) */
-  async pushAction(roomCode: string, action: Omit<PlayerAction, 'timestamp'>): Promise<void> {
-    const actionsRef = ref(database, `rooms/${roomCode}/gameState/actions`);
+  /** Push a player action — uses RTDB push() so each action has a unique key. */
+  async pushAction(roomCode: string, action: Omit<PlayerAction, 'ts'>): Promise<void> {
+    const actionsRef = ref(database, `rooms/${roomCode}/actions`);
     const newRef = push(actionsRef);
-    await set(newRef, {
-      ...action,
-      timestamp: Date.now(),
-    });
+    await set(newRef, { ...action, ts: Date.now() });
   }
 
-  /** Listen to game state changes (all players) */
+  /** Pull a one-shot snapshot for reconnect. Returns null if absent. */
+  async getSnapshot(roomCode: string): Promise<GameStatePayload | null> {
+    const snap = await get(ref(database, `rooms/${roomCode}/gameState`));
+    if (!snap.exists()) return null;
+    const v = snap.val() as GameStatePayload;
+    if (typeof v.version === 'number') {
+      // Track local version watermark so a host doesn't accidentally regress.
+      const cur = this.versions.get(roomCode) ?? 0;
+      if (v.version > cur) this.versions.set(roomCode, v.version);
+    }
+    return v;
+  }
+
+  /** Listen to game state changes (all players). Filters out stale versions. */
   listenToGameState(
     roomCode: string,
     callback: (state: GameStatePayload | null) => void
   ): () => void {
     const stateRef = ref(database, `rooms/${roomCode}/gameState`);
+    let lastSeenVersion = 0;
     const unsubscribe = onValue(stateRef, (snapshot) => {
-      if (snapshot.exists()) {
-        callback(snapshot.val() as GameStatePayload);
-      } else {
+      if (!snapshot.exists()) {
         callback(null);
+        return;
       }
+      const v = snapshot.val() as GameStatePayload;
+      const ver = typeof v.version === 'number' ? v.version : 0;
+      if (ver < lastSeenVersion) return; // ignore stale snapshot
+      lastSeenVersion = ver;
+      callback(v);
     });
     this.listeners.set(`state_${roomCode}`, unsubscribe);
     return unsubscribe;
   }
 
-  /** Listen to player actions (host collects) */
+  /** Listen to player actions (host collects). Each action keyed by push id. */
   listenToActions(
     roomCode: string,
     callback: (actions: Record<string, PlayerAction>) => void
   ): () => void {
-    const actionsRef = ref(database, `rooms/${roomCode}/gameState/actions`);
+    const actionsRef = ref(database, `rooms/${roomCode}/actions`);
     const unsubscribe = onValue(actionsRef, (snapshot) => {
       callback(snapshot.exists() ? snapshot.val() : {});
     });
@@ -94,17 +133,42 @@ class GameSyncService {
     return unsubscribe;
   }
 
-  /** Clear actions between rounds */
-  async clearActions(roomCode: string): Promise<void> {
-    const actionsRef = ref(database, `rooms/${roomCode}/gameState/actions`);
-    await remove(actionsRef);
+  /** Remove a single action after the host processed it. */
+  async ackAction(roomCode: string, actionKey: string): Promise<void> {
+    await remove(ref(database, `rooms/${roomCode}/actions/${actionKey}`));
   }
 
-  /** Set player presence (auto-cleanup on disconnect) */
+  /** Clear all queued actions (e.g. between rounds). */
+  async clearActions(roomCode: string): Promise<void> {
+    await remove(ref(database, `rooms/${roomCode}/actions`));
+  }
+
+  /**
+   * Set player presence + start a heartbeat. The heartbeat refreshes
+   * `lastSeen` every 5s so peers can detect dropouts within ~12s.
+   */
   async setPresence(roomCode: string, playerId: string): Promise<void> {
     const presenceRef = ref(database, `rooms/${roomCode}/presence/${playerId}`);
     await set(presenceRef, { online: true, lastSeen: Date.now() });
     onDisconnect(presenceRef).set({ online: false, lastSeen: Date.now() });
+
+    const key = `${roomCode}_${playerId}`;
+    const existing = this.heartbeats.get(key);
+    if (existing) clearInterval(existing);
+    const id = setInterval(() => {
+      update(presenceRef, { online: true, lastSeen: Date.now() }).catch(() => {});
+    }, HEARTBEAT_MS);
+    this.heartbeats.set(key, id);
+  }
+
+  /** Stop the heartbeat for a single player (used on leave). */
+  stopHeartbeat(roomCode: string, playerId: string): void {
+    const key = `${roomCode}_${playerId}`;
+    const id = this.heartbeats.get(key);
+    if (id) {
+      clearInterval(id);
+      this.heartbeats.delete(key);
+    }
   }
 
   /** Listen to player presence */
@@ -120,19 +184,41 @@ class GameSyncService {
     return unsubscribe;
   }
 
-  /** Clean up game state when room is closed */
-  async cleanupGameState(roomCode: string): Promise<void> {
-    const stateRef = ref(database, `rooms/${roomCode}/gameState`);
-    const presenceRef = ref(database, `rooms/${roomCode}/presence`);
-    await Promise.all([remove(stateRef), remove(presenceRef)]);
+  /** Helper: returns the set of player ids that are considered "live" right now. */
+  static stalenessFilter(
+    presence: Record<string, { online: boolean; lastSeen: number }> | null | undefined,
+    now: number = Date.now()
+  ): Set<string> {
+    const live = new Set<string>();
+    if (!presence) return live;
+    for (const [pid, p] of Object.entries(presence)) {
+      if (p?.online && now - (p.lastSeen || 0) < STALE_AFTER_MS) live.add(pid);
+    }
+    return live;
   }
 
-  /** Remove all listeners for a room */
+  /** Clean up all room-scoped server state (host only). */
+  async cleanupGameState(roomCode: string): Promise<void> {
+    this.versions.delete(roomCode);
+    await Promise.all([
+      remove(ref(database, `rooms/${roomCode}/gameState`)),
+      remove(ref(database, `rooms/${roomCode}/actions`)),
+      remove(ref(database, `rooms/${roomCode}/presence`)),
+    ]);
+  }
+
+  /** Remove all listeners + heartbeats for a room. */
   removeAllListeners(roomCode: string): void {
     for (const [key, unsub] of this.listeners) {
       if (key.includes(roomCode)) {
-        unsub();
+        try { unsub(); } catch {}
         this.listeners.delete(key);
+      }
+    }
+    for (const [key, id] of this.heartbeats) {
+      if (key.startsWith(`${roomCode}_`)) {
+        clearInterval(id);
+        this.heartbeats.delete(key);
       }
     }
   }

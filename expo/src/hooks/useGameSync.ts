@@ -1,16 +1,24 @@
 import { useEffect, useCallback, useRef } from 'react';
 import { useMultiplayerStore } from '../store/useMultiplayerStore';
+import { gameSyncService } from '../services/GameSyncService';
 import { GameMode } from '../models/AppModels';
 
 /**
- * useGameSync: A hook to synchronize mini-game state across devices using Firebase.
- * 
- * In Single-device mode: Everything runs locally.
- * In Multi-device mode: 
- *  - The HOST computes the logic and calls `syncState(newState)` to broadcast it.
- *  - The CLIENTS receive the state automatically and just render it. 
- *  - When CLIENTS interact (e.g., tap a tile), they call `sendAction('tap', { index })`.
- *  - The HOST receives actions via `onActionReceived` and processes them.
+ * useGameSync — synchronize mini-game state across devices.
+ *
+ * Single-device  → everything runs locally; sendAction routes straight to the
+ *                  reducer-style handler.
+ * Multi-device   → host is authoritative. Host computes next state and calls
+ *                  `syncState(next)` which broadcasts a versioned snapshot.
+ *                  Clients receive snapshots through `useMultiplayerStore` and
+ *                  apply them blindly. When clients interact they `sendAction`
+ *                  to enqueue a unique-keyed entry under `/rooms/<code>/actions`;
+ *                  the host drains, processes once (de-dup by action key), and
+ *                  acks via `ackAction` so the queue stays small.
+ *
+ * Reconnect: when a client mounts in multiplayer mode it pulls a snapshot
+ * synchronously via `getSnapshot()` so the UI is consistent before the live
+ * subscription delivers the next event.
  */
 export function useGameSync<T>(
   mode: GameMode,
@@ -19,69 +27,81 @@ export function useGameSync<T>(
   onActionReceived?: (type: string, data: any, playerId: string) => void
 ) {
   const isMultiplayer = mode === GameMode.multiDevice || mode === GameMode.teamMode;
-  const { gameState, broadcastState, pushAction, playerActions, isHost, clearActions } = useMultiplayerStore();
-  
-  // Keep track of processed action timestamps to avoid re-running them
-  const lastProcessedTime = useRef<number>(0);
+  const {
+    gameState,
+    broadcastState,
+    pushAction,
+    playerActions,
+    isHost,
+    roomCode,
+  } = useMultiplayerStore();
 
-  // --- HOST: Listen to Client Actions ---
+  const processedKeys = useRef<Set<string>>(new Set());
+
+  // --- HOST: drain client actions exactly once (de-dup by push key) ---
   useEffect(() => {
-    if (isMultiplayer && isHost && onActionReceived) {
-      const actions = Object.values(playerActions);
-      if (actions.length === 0) return;
+    if (!isMultiplayer || !isHost || !onActionReceived || !roomCode) return;
+    const entries = Object.entries(playerActions || {});
+    if (entries.length === 0) return;
 
-      // Filter out old actions
-      const newActions = actions.filter(a => a.timestamp > lastProcessedTime.current);
-      
-      newActions.forEach(action => {
+    for (const [key, action] of entries) {
+      if (processedKeys.current.has(key)) continue;
+      processedKeys.current.add(key);
+      try {
         onActionReceived(action.type, action.data, action.playerId);
-        lastProcessedTime.current = Math.max(lastProcessedTime.current, action.timestamp);
-      });
-
-      // Clear them from Firebase so it doesn't pile up
-      if (newActions.length > 0) {
-        clearActions();
+      } catch (e) {
+        console.warn('useGameSync: action handler threw', (e as Error)?.message);
       }
+      gameSyncService.ackAction(roomCode, key).catch(() => {});
     }
-  }, [playerActions, isHost, isMultiplayer, onActionReceived, clearActions]);
+  }, [playerActions, isHost, isMultiplayer, onActionReceived, roomCode]);
 
-  // --- CLIENT: Listen to Host State Updates ---
+  // --- CLIENT: apply host-authoritative snapshot ---
   useEffect(() => {
-    if (isMultiplayer && !isHost && gameState?.turnData) {
+    if (!isMultiplayer || isHost) return;
+    if (gameState?.turnData !== undefined) {
       setLocalState(gameState.turnData as T);
     }
-  }, [isMultiplayer, isHost, gameState?.turnData, setLocalState]);
+  }, [isMultiplayer, isHost, gameState?.turnData, gameState?.version, setLocalState]);
 
-  // --- HOST: Broadcast State Updates ---
+  // --- CLIENT: pull a snapshot once on mount in case we joined late/reconnected ---
+  useEffect(() => {
+    if (!isMultiplayer || isHost || !roomCode) return;
+    let cancelled = false;
+    gameSyncService.getSnapshot(roomCode).then((snap) => {
+      if (cancelled) return;
+      if (snap?.turnData !== undefined) setLocalState(snap.turnData as T);
+    }).catch(() => {});
+    return () => { cancelled = true; };
+  }, [isMultiplayer, isHost, roomCode, setLocalState]);
+
+  // --- HOST: broadcast finalized state ---
   const syncState = useCallback((newState: T | ((prev: T) => T)) => {
-    setLocalState(prev => {
-      const resolvedState = typeof newState === 'function' ? (newState as any)(prev) : newState;
-      
+    setLocalState((prev) => {
+      const resolved = typeof newState === 'function' ? (newState as any)(prev) : newState;
       if (isMultiplayer && isHost) {
-        // Host broadcasts the finalized state to everyone
-        broadcastState({ turnData: resolvedState });
+        broadcastState({ turnData: resolved });
       }
-      return resolvedState;
+      return resolved;
     });
   }, [isMultiplayer, isHost, broadcastState, setLocalState]);
 
-  // --- CLIENT: Send Interaction ---
+  // --- ANY: send an interaction. On host or single-device runs locally; on
+  // client devices it enqueues for the host. ---
   const sendAction = useCallback((type: string, data: any) => {
     if (isMultiplayer && !isHost) {
       pushAction(type, data);
-    } else if (!isMultiplayer || isHost) {
-      // If it's single device or the host itself tapped something, 
-      // directly trigger the action handler.
-      if (onActionReceived) {
-        onActionReceived(type, data, 'host');
-      }
+      return;
+    }
+    if (onActionReceived) {
+      onActionReceived(type, data, 'host');
     }
   }, [isMultiplayer, isHost, pushAction, onActionReceived]);
 
-  return { 
-    syncState, 
-    sendAction, 
+  return {
+    syncState,
+    sendAction,
     isHost: isMultiplayer ? isHost : true,
-    isMultiplayer
+    isMultiplayer,
   };
 }

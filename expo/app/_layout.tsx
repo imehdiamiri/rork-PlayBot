@@ -19,6 +19,7 @@ import { useEconomyStore } from '@/src/store/useEconomyStore';
 import { usePaywallStore } from '@/src/store/usePaywallStore';
 import { useAudioPreload } from '@/src/hooks/useAudioPreload';
 import { ToastOverlay } from '@/src/components/ToastOverlay';
+import { RootErrorBoundary } from '@/src/components/ErrorBoundary';
 import { DeviceIdentity } from '@/src/utils/DeviceIdentity';
 import { setUserOnline, setUserOffline } from '@/src/lib/firebase';
 
@@ -123,6 +124,7 @@ export default function RootLayout() {
   }
 
   return (
+    <RootErrorBoundary>
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="onboarding" options={{ headerShown: false }} />
@@ -137,5 +139,6 @@ export default function RootLayout() {
       <StatusBar style="auto" />
       <ToastOverlay />
     </ThemeProvider>
+    </RootErrorBoundary>
   );
 }

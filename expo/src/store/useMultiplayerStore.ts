@@ -114,6 +114,7 @@ export const useMultiplayerStore = create<MultiplayerState>((set, get) => {
       if (!roomCode || !localPlayerId) return;
 
       try {
+        gameSyncService.stopHeartbeat(roomCode, localPlayerId);
         if (isHost) {
           await gameSyncService.cleanupGameState(roomCode);
           await multiplayerService.closeRoom(roomCode);

@@ -29,10 +29,26 @@
 - [x] `_layout.tsx` bridges Firebase auth → `economy.attach` + `paywall.configure` on uid change; detaches on sign-out. Registered `paywall` as a modal screen.
 - [x] RTDB rules harden `users/$uid/{isLifetime,entitlementUpdatedAt,processedTransactions}` against client writes.
 
+## Phase 6 — Multiplayer hardening (Memory Grid, Guess the Seconds, Pass & Guess)
+- [x] `GameSyncService` rewritten with monotonic `version` per broadcast, stale-snapshot filter, action push-key de-dup (`ackAction`), `getSnapshot()` for reconnects, and 5s presence heartbeat with 12s staleness window.
+- [x] `useGameSync` switched from timestamp watermark to action-key set so the host never re-processes the same action twice (even after reconnect). Clients now pull a one-shot snapshot on mount.
+- [x] `database.rules.json` allows host-only writes to `rooms/$code/gameState`, per-player writes to `actions/$key` and `presence/$pid`.
+- [x] `useMultiplayerStore.leaveRoom` now stops the heartbeat before tearing the room down.
+
+## Phase 9 — Storefront wiring
+- [x] `purchase-detail.tsx` now reads `identifier` from route params, resolves the live `PurchasesPackage` from `usePaywallStore`, classifies it (subscription / lifetime / star pack / donation) and calls `purchasePackage`. Falls back to a clean loading state when offerings are not yet hydrated.
+- [x] `profile.tsx` plan and star-pack rows are driven by `getSubscriptionPackages()`, `getLifetimePackage()` and `getStarPackages()`. Tapping a row deep-links into `/purchase-detail` with the identifier.
+
+## Phase 10 — Production polish
+- [x] `RootErrorBoundary` mounted at the top of `_layout.tsx` so a single render exception cannot brick the app; offers a recover-to-tree button.
+
+## Validation
+- [x] runChecks passes after Phase 6 / 9 / 10 changes.
+
 ## Follow-ups (next sessions)
-- Phase 2 — admin website migration to Firebase Admin SDK
-- Phase 6 — multiplayer rebuild (Memory Grid, Guess the Seconds, Pass & Guess)
-- Phase 7–10 — perf, UI consolidation, team mode, production polish
-- Set RC server secret: `firebase functions:secrets:set REVENUECAT_SECRET`
-- Wire `purchase-detail.tsx` to a real package via route params (currently hardcoded yearly placeholder)
-- Replace hardcoded plan/star tiles in `profile.tsx` with live RC offerings
+- Phase 2 — admin website migration to Firebase Admin SDK (still on Supabase).
+- Phase 6 — wire `Memory Grid`, `Guess the Seconds`, `Pass & Guess` session components to use `useGameSync` end-to-end (infra is now production-ready, but Guess the Seconds + Pass & Guess still run state locally even in multi-device mode).
+- Phase 7 — animation engine consolidation, low-end Android profiling, lazy load card decks.
+- Phase 8 — extract reusable scoreboard / result-screen / setup primitives.
+- Phase 9 — Team Setup + Lobby + Friends Rooms tab finishing pass.
+- Set RC server secret: `firebase functions:secrets:set REVENUECAT_SECRET` and deploy updated `database.rules.json` (`firebase deploy --only database`).
