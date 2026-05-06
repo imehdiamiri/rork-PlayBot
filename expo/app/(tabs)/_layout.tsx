@@ -113,7 +113,7 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
                 >
                   <View style={styles.pill}>
                     <TabIndicator focused={isFocused} />
-                    <IconSymbol size={26} name={item.icon as any} color={tint} />
+                    <IconSymbol size={30} name={item.icon as any} color={tint} />
                     <Text
                       style={[styles.label, isFocused && styles.labelActive]}
                       numberOfLines={1}
@@ -169,13 +169,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   pill: {
-    minWidth: 64,
-    height: 60,
+    minWidth: 70,
+    height: 62,
     paddingHorizontal: 12,
     borderRadius: 22,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 2,
+    gap: 3,
   },
   label: {
     fontFamily: 'Viral-Black',
@@ -183,6 +183,7 @@ const styles = StyleSheet.create({
     fontSize: 11,
     letterSpacing: 0.2,
     includeFontPadding: false,
+    marginTop: 2,
   },
   labelActive: {
     color: ACTIVE_BLUE,

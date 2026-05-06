@@ -355,8 +355,9 @@ const styles = StyleSheet.create({
   },
   title: {
     fontFamily: 'Viral-Black',
-    fontSize: 20,
+    fontSize: 26,
     color: 'white',
+    letterSpacing: -0.3,
   },
   profileButton: {
     width: 40,
@@ -402,17 +403,20 @@ const styles = StyleSheet.create({
     borderRadius: 20,
   },
   aiBadgeText: {
+    fontFamily: 'Viral-Black',
     color: 'rgba(255,255,255,0.9)',
     fontSize: 11,
-    fontWeight: '900',
     letterSpacing: 1.2,
   },
   heroTitle: {
+    fontFamily: 'Viral-Black',
     color: 'white',
     fontSize: 28,
-    fontWeight: '900',
+    letterSpacing: -0.5,
+    lineHeight: 32,
   },
   heroSubtitle: {
+    fontFamily: 'Fredoka_500Medium',
     color: 'rgba(255,255,255,0.75)',
     fontSize: 13,
     lineHeight: 18,
@@ -434,13 +438,14 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   sectionTitle: {
+    fontFamily: 'Viral-Black',
     color: 'white',
-    fontSize: 15,
-    fontWeight: 'bold',
+    fontSize: 18,
+    letterSpacing: -0.2,
   },
   selectedVibeText: {
-    fontSize: 12,
-    fontWeight: '600',
+    fontFamily: 'Viral-Black',
+    fontSize: 13,
   },
   vibeGrid: {
     flexDirection: 'row',
@@ -461,8 +466,8 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   vibeTileText: {
-    fontSize: 11,
-    fontWeight: 'bold',
+    fontFamily: 'Viral-Black',
+    fontSize: 12,
   },
   detailsContainer: {
     gap: 14,
@@ -492,9 +497,9 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   playersLabel: {
+    fontFamily: 'Viral-Black',
     color: Colors.green,
-    fontSize: 15,
-    fontWeight: '600',
+    fontSize: 16,
   },
   stepperButton: {
     width: 28,
@@ -508,9 +513,9 @@ const styles = StyleSheet.create({
     opacity: 0.3,
   },
   playerCount: {
+    fontFamily: 'Viral-Black',
     color: Colors.green,
     fontSize: 20,
-    fontWeight: 'bold',
     minWidth: 28,
     textAlign: 'center',
   },
@@ -521,9 +526,9 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   contextLabel: {
+    fontFamily: 'Viral-Black',
     color: 'rgba(255,255,255,0.9)',
-    fontSize: 12,
-    fontWeight: 'bold',
+    fontSize: 13,
   },
   contextInputWrapper: {
     backgroundColor: 'rgba(0,0,0,0.15)',
@@ -566,9 +571,9 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   generateButtonText: {
+    fontFamily: 'Viral-Black',
     color: 'white',
     fontSize: 17,
-    fontWeight: 'bold',
   },
   resultsSection: {
     marginTop: 10,
@@ -590,13 +595,14 @@ const styles = StyleSheet.create({
     borderRadius: 36,
   },
   emptyResultsTitle: {
+    fontFamily: 'Viral-Black',
     color: 'white',
-    fontSize: 15,
-    fontWeight: 'bold',
+    fontSize: 16,
   },
   emptyResultsText: {
+    fontFamily: 'Fredoka_500Medium',
     color: 'rgba(255,255,255,0.6)',
-    fontSize: 12,
+    fontSize: 13,
     textAlign: 'center',
     paddingHorizontal: 24,
   },
@@ -616,9 +622,9 @@ const styles = StyleSheet.create({
     borderRadius: 20,
   },
   badgeText: {
+    fontFamily: 'Viral-Black',
     color: 'rgba(255,255,255,0.6)',
     fontSize: 12,
-    fontWeight: 'bold',
   },
   ideaHeaderRow: {
     flexDirection: 'row',
@@ -638,13 +644,14 @@ const styles = StyleSheet.create({
     gap: 3,
   },
   ideaTitle: {
+    fontFamily: 'Viral-Black',
     color: 'white',
-    fontSize: 15,
-    fontWeight: 'bold',
+    fontSize: 16,
   },
   ideaDescription: {
+    fontFamily: 'Fredoka_500Medium',
     color: 'rgba(255,255,255,0.6)',
-    fontSize: 12,
+    fontSize: 13,
   },
   expandButton: {
     width: 30,
@@ -670,14 +677,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   stepBadgeText: {
+    fontFamily: 'Viral-Black',
     color: Colors.blue,
     fontSize: 11,
-    fontWeight: 'bold',
   },
   stepText: {
+    fontFamily: 'Fredoka_500Medium',
     flex: 1,
     color: 'rgba(255,255,255,0.85)',
-    fontSize: 12,
+    fontSize: 13,
     marginTop: 2,
   },
   tagsRow: {
@@ -693,9 +701,9 @@ const styles = StyleSheet.create({
     borderRadius: 20,
   },
   tagText: {
+    fontFamily: 'Viral-Black',
     color: 'rgba(255,255,255,0.75)',
     fontSize: 11,
-    fontWeight: '600',
   },
 });
 
