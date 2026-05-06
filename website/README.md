@@ -1,31 +1,27 @@
-# 8PartyPlay Admin Panel
+# PartyBot Admin Panel
 
-A full-featured Next.js 15 admin dashboard for 8PartyPlay, backed by Supabase.
+Next.js 15 admin dashboard for PartyBot, backed by **Firebase** (Auth + RTDB) via the Firebase Admin SDK.
 
 ## Features
 - Dashboard with KPIs (DAU/WAU/MAU, subs, stars, AI)
 - User list + search + detail page
-- Grant / deduct stars, unlock / lock games, ban / unban, grant subscription (30-day override)
+- Grant / deduct stars, unlock / lock games, ban / unban, grant / revoke premium
 - Invite tracking
-- AI usage logs
+- AI usage logs (`aiUsage/$uid/$day`)
 - Analytics with 30-day signup chart
-- Remote **App Config** (economy constants, feature flags) read by iOS app
-- Remote **UI Config** (free game list, featured games, banners, theme)
-- Announcements + push
-- Full **audit log** of every admin action
-- Email allow-list auth (no email = no access)
+- Remote **App Config** (`appConfig/*`) and **UI Config** (`uiConfig/*`)
+- Announcements (`announcements/*`)
+- Full **audit log** (`adminAuditLog/*`) of every admin action
+- Auth gated by Firebase custom claim `admin: true`
 
-## 1. Deploy the Supabase SQL
+## 1. Bootstrap an admin
 
-Run in the Supabase SQL Editor (in order):
-1. `supabase_final_production.sql` (already deployed)
-2. `supabase_invite_system.sql` (already deployed)
-3. **`supabase_admin_panel.sql`** (new — in repo root)
+Grant the `admin` custom claim once from any environment with the service account:
 
-Then add yourself as the first admin:
-
-```sql
-INSERT INTO public.admin_users (email, role) VALUES ('you@example.com', 'superadmin');
+```js
+const admin = require("firebase-admin");
+admin.initializeApp({ credential: admin.credential.cert(require("./service-account.json")) });
+admin.auth().setCustomUserClaims("<UID>", { admin: true }).then(() => console.log("ok"));
 ```
 
 ## 2. Configure environment
@@ -33,45 +29,37 @@ INSERT INTO public.admin_users (email, role) VALUES ('you@example.com', 'superad
 Copy `.env.example` → `.env.local` and fill in:
 
 ```
-NEXT_PUBLIC_SUPABASE_URL=https://YOUR-PROJECT.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=...
-SUPABASE_SERVICE_ROLE_KEY=...      # optional, not required for current features
+NEXT_PUBLIC_FIREBASE_API_KEY=...
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=...
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=...
+NEXT_PUBLIC_FIREBASE_DATABASE_URL=...
+NEXT_PUBLIC_FIREBASE_APP_ID=...
+
+FIREBASE_SERVICE_ACCOUNT='{"type":"service_account",...}'
+FIREBASE_DATABASE_URL=https://<project>-default-rtdb.firebaseio.com
+ADMIN_SESSION_SECRET=<32+ char random string>
 ```
 
 ## 3. Run locally
 
 ```bash
-cd admin
-npm install
-npm run dev
-# open http://localhost:3001
+cd website
+bun install
+bun run dev
+# open http://localhost:3001/admin
 ```
 
-## 4. Deploy to Vercel
+## 4. Auth flow
 
-1. Push this repo to GitHub.
-2. In Vercel: New Project → import the repo → **Root directory: `admin`**.
-3. Add the env vars above in Project Settings → Environment Variables.
-4. Deploy.
-5. Add custom domain **admin.8partyplay.com** in Vercel → Domains, and add a CNAME record pointing to `cname.vercel-dns.com` in your DNS.
+The login page signs in with Firebase Web SDK (email/password), then `POST /api/admin/session` exchanges the ID token for a `__pb_admin_session` HttpOnly session cookie via Admin SDK. `requireAdmin()` verifies the cookie + the `admin` custom claim on every server render.
 
-## 5. Access control
+## 5. Data model (RTDB)
 
-Only emails listed in `public.admin_users` can sign in. A normal Supabase auth password login is used. Anyone else will be redirected to the login screen with "not an admin" error.
-
-## 6. iOS app — reading remote config
-
-The iOS app can read both `app_config` and `ui_config` via Supabase (anon key; rows are publicly readable). Example helper:
-
-```swift
-let rows: [ConfigRow] = try await SupabaseService.shared.client
-    .from("ui_config").select("*").execute().value
-```
-
-Update `free_games` in the UI Config page to change which games are free without shipping a new build.
-
-## 7. Customization points
-
-- `admin_set_subscription` grants 30 days by default — tweak default in the RPC or pass `p_expires_at`
-- Game keys in `UserActions.tsx` (`ALL_GAMES`) — update to match your current game list
-- Push notifications: `announcements.send_push` is a flag; wire it to a server function or OneSignal/APNs job when you set that up
+| Path | Purpose |
+| --- | --- |
+| `users/$uid` | Profile, wallet, isPremium, banned, unlocks, transactions |
+| `aiUsage/$uid/$YYYY-MM-DD` | Daily AI call counter (written by Cloud Functions) |
+| `appConfig/$key` | `{ value, description, updatedAt }` |
+| `uiConfig/$key` | `{ value, description, updatedAt }` |
+| `announcements/$id` | `{ title, body, audience, sendPush, active, createdAt }` |
+| `adminAuditLog/$id` | `{ adminUid, adminEmail, action, targetType, targetId, payload, createdAt }` |

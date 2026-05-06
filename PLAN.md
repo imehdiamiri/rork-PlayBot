@@ -66,8 +66,18 @@
 ## Validation
 - [x] runChecks passes after Phase 7 / 8 / 9 changes.
 
+## Phase 2 — Admin website migrated to Firebase Admin SDK
+- [x] Removed `@supabase/ssr` and `@supabase/supabase-js`; deleted `website/lib/supabase{,-server}.ts`.
+- [x] Added `website/lib/firebase-admin.ts` (cert-based Admin SDK init + `isAdminUid` helper that reads the `admin` custom claim) and `website/lib/firebase-client.ts` (Web SDK for the login form).
+- [x] Auth flow: login page signs in with Firebase Web SDK and `POST /api/admin/session` exchanges the ID token for an HttpOnly session cookie via `createSessionCookie`. `requireAdmin()` verifies the cookie + `admin` claim on every server render. `middleware.ts` does a cheap cookie-presence redirect (Edge runtime can't load Admin SDK).
+- [x] Rewrote every admin page (`page.tsx` for dashboard, users, user detail, ai-logs, analytics, announcements, audit, content, ui, invites) on top of `website/lib/data.ts` which reads directly from RTDB (`users/`, `aiUsage/`, `appConfig/`, `uiConfig/`, `announcements/`, `adminAuditLog/`).
+- [x] All client-side mutations replaced with Next.js server actions in `website/lib/actions.ts` (`adjustStars`, `setSubscription`, `setBan`, `toggleUnlock`, `setConfig`, `deleteConfig`, `createAnnouncement`, `toggleAnnouncement`, `signOut`). Each action goes through `requireAdmin()`, mutates RTDB, writes an `adminAuditLog` row, and `revalidatePath`s.
+- [x] Banning a user now also calls `adminAuth().revokeRefreshTokens(uid)` so they're forced out of any open session.
+- [x] Updated `.env.example` (Firebase web config + `FIREBASE_SERVICE_ACCOUNT` + `FIREBASE_DATABASE_URL` + `ADMIN_SESSION_SECRET`) and rewrote `README.md` with the Firebase setup + RTDB schema.
+- [x] `bun run build` passes (Next.js 15, all 13 admin routes compile).
+
 ## Follow-ups (next sessions)
-- Phase 2 — admin website migration to Firebase Admin SDK (still on Supabase).
 - Phase 7 — animation engine consolidation (`Animated` → Reanimated), low-end Android profiling.
 - Phase 8 — extract a shared `RoundHeader` and `SetupCard` primitive once 2+ games actually need them.
 - Set RC server secret: `firebase functions:secrets:set REVENUECAT_SECRET` and deploy updated `database.rules.json` (`firebase deploy --only database`).
+- Bootstrap the first admin: `admin.auth().setCustomUserClaims(uid, { admin: true })` (one-time, from any environment with the service account).

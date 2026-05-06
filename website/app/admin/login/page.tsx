@@ -1,7 +1,8 @@
 "use client";
 import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { browserClient } from "@/lib/supabase";
+import { signInWithEmailAndPassword, signOut } from "firebase/auth";
+import { clientAuth } from "@/lib/firebase-client";
 
 function LoginForm() {
   const router = useRouter();
@@ -17,27 +18,52 @@ function LoginForm() {
     e.preventDefault();
     setErr(null);
     setLoading(true);
-    const sb = browserClient();
-    const { error } = await sb.auth.signInWithPassword({ email, password });
-    if (error) { setErr(error.message); setLoading(false); return; }
-    const { data: isAdmin } = await sb.rpc("current_user_is_admin");
-    if (!isAdmin) {
-      await sb.auth.signOut();
-      setErr("This account is not an admin.");
+    try {
+      const auth = clientAuth();
+      const cred = await signInWithEmailAndPassword(auth, email, password);
+      const idToken = await cred.user.getIdToken();
+      const resp = await fetch("/api/admin/session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ idToken }),
+      });
+      if (!resp.ok) {
+        const data = await resp.json().catch(() => ({}));
+        await signOut(auth).catch(() => {});
+        if (data?.error === "not_admin") setErr("This account is not an admin.");
+        else setErr("Sign-in failed.");
+        return;
+      }
+      router.push("/admin");
+    } catch (e: any) {
+      setErr(e?.message ?? "Sign-in failed.");
+    } finally {
       setLoading(false);
-      return;
     }
-    router.push("/admin");
   }
 
   return (
     <form onSubmit={submit} className="card p-8 w-full max-w-sm space-y-4">
       <div>
-        <div className="text-xl font-semibold">8PartyPlay Admin</div>
-        <div className="text-sm text-muted mt-1">Sign in with your admin email</div>
+        <div className="text-xl font-semibold">PartyBot Admin</div>
+        <div className="text-sm text-muted mt-1">Sign in with your Firebase admin account</div>
       </div>
-      <input className="input" type="email" placeholder="you@example.com" value={email} onChange={e=>setEmail(e.target.value)} required />
-      <input className="input" type="password" placeholder="Password" value={password} onChange={e=>setPassword(e.target.value)} required />
+      <input
+        className="input"
+        type="email"
+        placeholder="you@example.com"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+        required
+      />
+      <input
+        className="input"
+        type="password"
+        placeholder="Password"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+        required
+      />
       {err && <div className="text-sm text-red-400">{err}</div>}
       <button className="btn btn-primary w-full justify-center" disabled={loading}>
         {loading ? "Signing in…" : "Sign in"}
