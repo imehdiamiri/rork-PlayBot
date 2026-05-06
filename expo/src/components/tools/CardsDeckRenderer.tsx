@@ -91,6 +91,14 @@ export function CardsDeckRenderer({ categoryId }: Props) {
     position.setValue({ x: 0, y: 0 });
   };
 
+  const resetPosition = () => {
+    Animated.spring(position, {
+      toValue: { x: 0, y: 0 },
+      friction: 6,
+      useNativeDriver: false,
+    }).start();
+  };
+
   forceSwipeRef.current = forceSwipe;
   resetPositionRef.current = resetPosition;
 
@@ -107,14 +115,6 @@ export function CardsDeckRenderer({ categoryId }: Props) {
     if (newSaved.has(currentCard.id)) newSaved.delete(currentCard.id);
     else newSaved.add(currentCard.id);
     setSavedCards(newSaved);
-  };
-
-  const resetPosition = () => {
-    Animated.spring(position, {
-      toValue: { x: 0, y: 0 },
-      friction: 6,
-      useNativeDriver: false,
-    }).start();
   };
 
   const rotate = position.x.interpolate({
