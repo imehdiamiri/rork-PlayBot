@@ -41,10 +41,10 @@ const PAGES = [0, 1, 2, 3] as const;
 type PageIndex = 0 | 1 | 2 | 3;
 
 const ART = {
-  bored: 'https://r2-pub.rork.com/generated-images/ebc63c17-6e4f-4107-ab7a-b3703140fbe7.png',
-  party: 'https://r2-pub.rork.com/generated-images/a29521e8-fdb3-478a-8fcd-bc9b1b8d7352.png',
-  portrait: 'https://r2-pub.rork.com/generated-images/5446f691-ba97-4a91-a120-fea521c4a401.png',
-  hero: 'https://r2-pub.rork.com/generated-images/d712f74b-8b2d-4d84-a19f-d051443d156d.png',
+  bored: 'https://r2-pub.rork.com/generated-images/4e396ac3-1fba-4ee5-866d-476207601555.png',
+  party: 'https://r2-pub.rork.com/generated-images/3e9b3968-698e-4493-a37c-f06171523dc2.png',
+  portrait: 'https://r2-pub.rork.com/generated-images/62f9b671-0638-493e-9cb2-832eb18005da.png',
+  hero: 'https://r2-pub.rork.com/generated-images/21e709b6-883d-469d-bb51-f36a25d29d98.png',
 } as const;
 
 function EnterStage({ active, delay = 0, children, style }: { active: boolean; delay?: number; children: React.ReactNode; style?: any }) {
