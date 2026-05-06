@@ -1,37 +1,32 @@
 /**
- * LLMService — Google Gemini integration for AI card generation.
+ * LLMService — AI card generation via secure Firebase Cloud Function proxy.
  *
- * Uses Gemini 2.0 Flash (free tier — 15 RPM, 1M TPM).
- * Get your free API key at: https://aistudio.google.com/apikey
+ * IMPORTANT: The Gemini API key is no longer shipped in the client bundle.
+ * All AI requests go through the `generateCard` Cloud Function, which:
+ *   - holds the API key as a secret
+ *   - enforces per-user rate limiting and the FREE_DAILY_LIMIT
+ *   - applies content moderation server-side
  *
- * Configuration: Set EXPO_PUBLIC_GEMINI_API_KEY in your .env file.
- * The service falls back to a mock response when no key is configured,
- * allowing offline development and testing.
+ * Deploy the function from `functions/` with:
+ *   firebase deploy --only functions:generateCard
+ *
+ * In dev, if the function is unavailable (not deployed / offline), we fall
+ * back to a deterministic mock so the UI flow can still be exercised.
  */
 
-const MODEL = 'gemini-2.0-flash';
+import { httpsCallable, HttpsCallableResult } from 'firebase/functions';
+import { functions } from '../lib/firebase';
 
-// In production, load from env or secure storage
-let API_KEY: string | null = null;
-
-/**
- * Configure the LLM service with a Gemini API key.
- * Call this during app initialization if the key is available.
- */
-export function configureLLM(apiKey: string): void {
-  API_KEY = apiKey;
+interface GenerateCardRequest {
+  system: string;
+  user: string;
 }
 
-/**
- * Check if the LLM service is configured and ready.
- */
-export function isLLMConfigured(): boolean {
-  return API_KEY !== null && API_KEY.length > 0;
+interface GenerateCardResponse {
+  text: string;
 }
 
-/**
- * Strip markdown code fences from LLM output.
- */
+/** Strip markdown code fences from LLM output. */
 export function stripCodeFences(text: string): string {
   return text
     .replace(/```json\s*/gi, '')
@@ -40,58 +35,37 @@ export function stripCodeFences(text: string): string {
 }
 
 /**
- * Complete a chat prompt using Google Gemini.
- * Falls back to a mock response when no API key is set.
+ * Always-true now (the proxy is the source of truth). Kept for call-site
+ * compatibility — the Cloud Function decides whether the key is configured.
  */
-export async function complete(system: string, user: string): Promise<string> {
-  if (!isLLMConfigured()) {
-    // Mock fallback for development
-    console.warn('LLMService: No API key configured. Using mock response.');
-    return mockCompletion(user);
-  }
-
-  const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${API_KEY}`;
-
-  const response = await fetch(apiUrl, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      systemInstruction: {
-        parts: [{ text: system }],
-      },
-      contents: [
-        {
-          role: 'user',
-          parts: [{ text: user }],
-        },
-      ],
-      generationConfig: {
-        temperature: 0.9,
-        maxOutputTokens: 256,
-      },
-    }),
-  });
-
-  if (!response.ok) {
-    const errorBody = await response.text();
-    throw new Error(`Gemini request failed (${response.status}): ${errorBody}`);
-  }
-
-  const data = await response.json();
-  const content = data.candidates?.[0]?.content?.parts?.[0]?.text;
-
-  if (!content) {
-    throw new Error('Empty Gemini response');
-  }
-
-  return content;
+export function isLLMConfigured(): boolean {
+  return true;
 }
 
 /**
- * Mock completion that returns a plausible party card based on category hints.
+ * Complete a card-generation prompt via the secure Cloud Function.
+ * Falls back to a mock response when the function is unreachable so dev
+ * builds without deployed functions still produce visible output.
  */
+export async function complete(system: string, user: string): Promise<string> {
+  try {
+    const fn = httpsCallable<GenerateCardRequest, GenerateCardResponse>(
+      functions,
+      'generateCard'
+    );
+    const result: HttpsCallableResult<GenerateCardResponse> = await fn({ system, user });
+    if (!result.data?.text) throw new Error('Empty response from generateCard');
+    return result.data.text;
+  } catch (e: any) {
+    if (__DEV__) {
+      console.warn('LLMService: generateCard unavailable, using mock.', e?.message);
+      return mockCompletion(user);
+    }
+    throw e;
+  }
+}
+
+/** Deterministic fallback so the dev UX still works without deployed functions. */
 function mockCompletion(userPrompt: string): Promise<string> {
   const mockCards: Record<string, string> = {
     act: '{"text":"Pretend you are a confused tourist asking for directions in sign language"}',
@@ -101,15 +75,12 @@ function mockCompletion(userPrompt: string): Promise<string> {
     couple: '{"text":"What is the one thing you wish you could tell each other more often"}',
   };
 
-  const lowerPrompt = userPrompt.toLowerCase();
-  let category = 'talk';
-  if (lowerPrompt.includes('act')) category = 'act';
-  else if (lowerPrompt.includes('challenge')) category = 'challenges';
-  else if (lowerPrompt.includes('penalty')) category = 'penalty';
-  else if (lowerPrompt.includes('couple')) category = 'couple';
+  const lower = userPrompt.toLowerCase();
+  let category: keyof typeof mockCards = 'talk';
+  if (lower.includes('act')) category = 'act';
+  else if (lower.includes('challenge')) category = 'challenges';
+  else if (lower.includes('penalty')) category = 'penalty';
+  else if (lower.includes('couple')) category = 'couple';
 
-  // Simulate network delay
-  return new Promise((resolve) => {
-    setTimeout(() => resolve(mockCards[category] || mockCards.talk), 800);
-  });
+  return new Promise((resolve) => setTimeout(() => resolve(mockCards[category]), 600));
 }

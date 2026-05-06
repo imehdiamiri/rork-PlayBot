@@ -19,7 +19,6 @@ import { useAudioPreload } from '@/src/hooks/useAudioPreload';
 import { ToastOverlay } from '@/src/components/ToastOverlay';
 import { DeviceIdentity } from '@/src/utils/DeviceIdentity';
 import { setUserOnline, setUserOffline } from '@/src/lib/firebase';
-import { configureLLM } from '@/src/services/LLMService';
 
 export const unstable_settings = {
   initialRouteName: '(tabs)',
@@ -55,10 +54,6 @@ export default function RootLayout() {
     setIsMounted(true);
     initialize();
     DeviceIdentity.init(); // warm device ID cache
-
-    // Configure LLM service with Gemini API key (free tier)
-    const geminiKey = process.env.EXPO_PUBLIC_GEMINI_API_KEY;
-    if (geminiKey) configureLLM(geminiKey);
   }, [initialize]);
 
   // Track app foreground/background for presence

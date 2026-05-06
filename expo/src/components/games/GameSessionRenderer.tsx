@@ -75,7 +75,7 @@ function GenericPlaceholder({ session, game }: Props) {
       <View style={styles.playersList}>
         {session.players.map(player => (
           <View key={player.id} style={styles.playerBadge}>
-            <Text style={styles.playerName}>{player.username}</Text>
+            <Text style={styles.playerName}>{player.displayName}</Text>
           </View>
         ))}
       </View>

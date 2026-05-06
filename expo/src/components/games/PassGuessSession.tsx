@@ -254,7 +254,7 @@ export function PassGuessSession({ session }: Props) {
       <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
         <IconSymbol name="eye.slash.fill" size={64} color={color} />
         <Text style={styles.privacyTitle}>Pass the phone to</Text>
-        <Text style={[styles.privacyName, { color }]}>{currentPlayer.username}</Text>
+        <Text style={[styles.privacyName, { color }]}>{currentPlayer.displayName}</Text>
         <Text style={styles.privacySubtitle}>
           {privacyAction === 'answer' ? "They will write their answer privately." : "They will guess who wrote an answer."}
         </Text>
@@ -333,7 +333,7 @@ export function PassGuessSession({ session }: Props) {
           <View style={styles.card}>
             <HStack>
               <View style={styles.turnPill}>
-                <Text style={styles.turnPillText}>Now: {currentPlayer.username}</Text>
+                <Text style={styles.turnPillText}>Now: {currentPlayer.displayName}</Text>
               </View>
               <Text style={styles.progressText}>{answers.length}/{session.players.length} answered</Text>
             </HStack>
@@ -393,7 +393,7 @@ export function PassGuessSession({ session }: Props) {
                   <HStack>
                     <View>
                       <Text style={[styles.voterName, { color: getPlayerColor(activePlayerIndex) }]}>
-                        {currentPlayer.username}
+                        {currentPlayer.displayName}
                       </Text>
                       <Text style={styles.cardSubtitle}>Who wrote this?</Text>
                     </View>
@@ -407,7 +407,7 @@ export function PassGuessSession({ session }: Props) {
                         style={[styles.candidateBtn, selectedGuess === p.id && styles.candidateBtnActive]}
                         onPress={() => setSelectedGuess(p.id)}
                       >
-                        <Text style={[styles.candidateText, { color: getPlayerColor(i) }]}>{p.username}</Text>
+                        <Text style={[styles.candidateText, { color: getPlayerColor(i) }]}>{p.displayName}</Text>
                       </Pressable>
                     ))}
                   </View>
@@ -440,7 +440,7 @@ export function PassGuessSession({ session }: Props) {
               <View key={ans.id} style={styles.card}>
                 <Text style={styles.answerText}>{ans.text}</Text>
                 <HStack style={{ marginTop: 12 }}>
-                  <Text style={[styles.authorText, { color: authorColor }]}>{author?.username}</Text>
+                  <Text style={[styles.authorText, { color: authorColor }]}>{author?.displayName}</Text>
                   <Text style={styles.correctText}>{correctVotes} correct guesses</Text>
                 </HStack>
               </View>
@@ -462,7 +462,7 @@ export function PassGuessSession({ session }: Props) {
             {session.players.slice().sort((a,b) => scores[b.id] - scores[a.id]).map((p, i) => (
               <HStack key={p.id} style={styles.leaderboardRow}>
                 <Text style={[styles.rank, i === 0 && { color: Colors.yellow }]}>#{i + 1}</Text>
-                <Text style={[styles.leaderboardName, { color: getPlayerColor(session.players.findIndex(x => x.id === p.id)) }]}>{p.username}</Text>
+                <Text style={[styles.leaderboardName, { color: getPlayerColor(session.players.findIndex(x => x.id === p.id)) }]}>{p.displayName}</Text>
                 <Text style={styles.scoreText}>{scores[p.id]} pts</Text>
               </HStack>
             ))}
@@ -483,7 +483,7 @@ export function PassGuessSession({ session }: Props) {
             {session.players.slice().sort((a,b) => scores[b.id] - scores[a.id]).map((p, i) => (
               <HStack key={p.id} style={styles.leaderboardRow}>
                 <Text style={[styles.rank, i === 0 && { color: Colors.yellow }]}>#{i + 1}</Text>
-                <Text style={[styles.leaderboardName, { color: getPlayerColor(session.players.findIndex(x => x.id === p.id)) }]}>{p.username}</Text>
+                <Text style={[styles.leaderboardName, { color: getPlayerColor(session.players.findIndex(x => x.id === p.id)) }]}>{p.displayName}</Text>
                 <Text style={styles.scoreText}>{scores[p.id]} pts</Text>
               </HStack>
             ))}

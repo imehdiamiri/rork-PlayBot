@@ -12,7 +12,7 @@ export interface GameResultRow {
 
 interface PlayerProfile {
   id: string;
-  username: string;
+  displayName: string;
 }
 
 interface RewardPolicy {
@@ -43,7 +43,7 @@ export function buildResults(
     const starsWon = isWin ? policy.starsForWin : policy.starsForParticipation;
 
     return {
-      name: player.username,
+      name: player.displayName,
       score,
       rank,
       starsWon,

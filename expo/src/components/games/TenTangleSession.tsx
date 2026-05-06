@@ -151,7 +151,7 @@ export function TenTangleSession({ session }: Props) {
       <View style={st.container}><View style={st.center}>
         <View style={st.iconBox}><IconSymbol name="eye.fill" size={52} color={Colors.orange} /></View>
         <Text style={st.roundLabel}>Round {round} of {totalRounds}</Text>
-        <Text style={[st.title, { color: Colors.orange }]}>{guesser.username}</Text>
+        <Text style={[st.title, { color: Colors.orange }]}>{guesser.displayName}</Text>
         <Text style={st.sub}>You are the Guesser this round!</Text>
         <Text style={st.hint}>Everyone else will get a secret number. Watch them act and guess their numbers.</Text>
         <Pressable style={st.btn} onPress={handleProceedToPass}><Text style={st.btnTx}>Continue</Text></Pressable>
@@ -166,9 +166,9 @@ export function TenTangleSession({ session }: Props) {
       <View style={st.container}><View style={st.center}>
         <IconSymbol name="hand.raised.fill" size={52} color="#5AC8FA" />
         <Text style={st.title}>Pass to</Text>
-        <Text style={[st.title, { color: '#5AC8FA', fontSize: 34 }]}>{p?.username}</Text>
+        <Text style={[st.title, { color: '#5AC8FA', fontSize: 34 }]}>{p?.displayName}</Text>
         <Text style={st.sub}>Tap below to see your secret number</Text>
-        <Text style={st.hint}>{guesser.username} should look away!</Text>
+        <Text style={st.hint}>{guesser.displayName} should look away!</Text>
         <Pressable style={st.btn} onPress={handleShowNumber}><Text style={st.btnTx}>Show My Number</Text></Pressable>
       </View></View>
     );
@@ -184,7 +184,7 @@ export function TenTangleSession({ session }: Props) {
       <View style={st.container}><View style={st.center}>
         <Text style={[st.bigNumber, { color: col }]}>{num}</Text>
         {lbl ? <Text style={[st.numLabel, { color: col }]}>{lbl}</Text> : null}
-        <Text style={st.sub}>Remember this number, {p?.username}!</Text>
+        <Text style={st.sub}>Remember this number, {p?.displayName}!</Text>
         <Text style={[st.hint, { marginTop: 20 }]}>1 = Disaster 😬 · {maxNumber} = Perfect 😍</Text>
         <Pressable style={st.btn} onPress={handleGotIt}><Text style={st.btnTx}>Got it!</Text></Pressable>
       </View></View>
@@ -213,8 +213,8 @@ export function TenTangleSession({ session }: Props) {
         <IconSymbol name="person.3.fill" size={52} color={Colors.green} />
         <Text style={st.title}>Acting Time!</Text>
         <View style={st.scenarioCard}><Text style={st.scenarioText}>{scenario}</Text></View>
-        <Text style={st.sub}>{guesser.username} — watch everyone carefully!</Text>
-        <Pressable style={st.btn} onPress={handleStartGuessing}><Text style={st.btnTx}>{guesser.username}, Start Guessing</Text></Pressable>
+        <Text style={st.sub}>{guesser.displayName} — watch everyone carefully!</Text>
+        <Pressable style={st.btn} onPress={handleStartGuessing}><Text style={st.btnTx}>{guesser.displayName}, Start Guessing</Text></Pressable>
       </View></View>
     );
   }
@@ -224,11 +224,11 @@ export function TenTangleSession({ session }: Props) {
     return (
       <View style={st.container}>
         <ScrollView contentContainerStyle={st.scrollPad}>
-          <Text style={[st.title, { textAlign: 'center' }]}>{guesser.username}'s Guesses</Text>
+          <Text style={[st.title, { textAlign: 'center' }]}>{guesser.displayName}'s Guesses</Text>
           <Text style={[st.sub, { textAlign: 'center', marginBottom: 20 }]}>Assign each player their number</Text>
           {nonGuessers.map(p => (
             <View key={p.id} style={st.guessRow}>
-              <Text style={st.guessName}>{p.username}</Text>
+              <Text style={st.guessName}>{p.displayName}</Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                 <View style={{ flexDirection: 'row', gap: 8 }}>
                   {Array.from({ length: maxNumber }, (_, i) => i + 1).map(n => {
@@ -266,7 +266,7 @@ export function TenTangleSession({ session }: Props) {
             if (ok) correct++;
             return (
               <View key={p.id} style={[st.revealRow, ok ? st.revealOk : st.revealWrong]}>
-                <Text style={st.revealName}>{p.username}</Text>
+                <Text style={st.revealName}>{p.displayName}</Text>
                 <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
                   <Text style={st.revealGuess}>Guess: {guess}</Text>
                   <Text style={[st.revealActual, { color: ok ? Colors.green : Colors.red }]}>Actual: {actual}</Text>
@@ -275,7 +275,7 @@ export function TenTangleSession({ session }: Props) {
               </View>
             );
           })}
-          <Text style={[st.sub, { textAlign: 'center', marginTop: 16 }]}>{guesser.username} got {correct}/{nonGuessers.length} correct!</Text>
+          <Text style={[st.sub, { textAlign: 'center', marginTop: 16 }]}>{guesser.displayName} got {correct}/{nonGuessers.length} correct!</Text>
           <Pressable style={st.btn} onPress={handleShowScoreboard}><Text style={st.btnTx}>Scoreboard</Text></Pressable>
         </ScrollView>
       </View>
@@ -292,7 +292,7 @@ export function TenTangleSession({ session }: Props) {
           {sortedScores.map((p, i) => (
             <View key={p.id} style={[st.scoreRow, i === 0 && st.scoreFirst]}>
               <Text style={st.scoreRank}>{rankEmojis[i] || `#${i+1}`}</Text>
-              <Text style={st.scoreName}>{p.username}</Text>
+              <Text style={st.scoreName}>{p.displayName}</Text>
               <Text style={st.scoreVal}>{scores[p.id] || 0}</Text>
             </View>
           ))}
@@ -328,7 +328,7 @@ export function TenTangleSession({ session }: Props) {
         {sortedScores.map((p, i) => (
           <View key={p.id} style={[st.scoreRow, i === 0 && st.scoreFirst]}>
             <Text style={st.scoreRank}>{rankEmojis[i] || `#${i+1}`}</Text>
-            <Text style={st.scoreName}>{p.username}</Text>
+            <Text style={st.scoreName}>{p.displayName}</Text>
             <Text style={st.scoreVal}>{scores[p.id] || 0} pts</Text>
           </View>
         ))}

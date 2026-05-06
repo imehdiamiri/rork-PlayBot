@@ -109,7 +109,7 @@ export function GuessTheSecondsSession({ session }: Props) {
     const difference = Math.round(Math.abs(targetTime - actualTime) * 100) / 100;
 
     const turn: TurnResult = {
-      playerName: currentPlayer.username,
+      playerName: currentPlayer.displayName,
       round: currentRoundNumber,
       targetTime,
       actualTime,
@@ -167,10 +167,10 @@ export function GuessTheSecondsSession({ session }: Props) {
   // Build per-player score summary
   const playerScores = useMemo(() => {
     return players.map(p => {
-      const pResults = results.filter(r => r.playerName === p.username);
+      const pResults = results.filter(r => r.playerName === p.displayName);
       const total = pResults.reduce((sum, r) => sum + r.difference, 0);
       const avg = pResults.length > 0 ? total / pResults.length : 0;
-      return { player: p.username, total, avg, turns: pResults.length };
+      return { player: p.displayName, total, avg, turns: pResults.length };
     }).sort((a, b) => a.total - b.total);
   }, [results, players]);
 
@@ -185,7 +185,7 @@ export function GuessTheSecondsSession({ session }: Props) {
           </Text>
           {currentPlayer && !isFinished && (
             <View style={styles.nowPlayingBadge}>
-              <Text style={styles.nowPlayingText}>Now: {currentPlayer.username}</Text>
+              <Text style={styles.nowPlayingText}>Now: {currentPlayer.displayName}</Text>
             </View>
           )}
           <View style={{flex: 1}}/>
@@ -311,11 +311,11 @@ export function GuessTheSecondsSession({ session }: Props) {
 
             {/* Player rows */}
             {players.map((p, idx) => {
-              const pResults = results.filter(r => r.playerName === p.username);
+              const pResults = results.filter(r => r.playerName === p.displayName);
               const total = pResults.reduce((sum, r) => sum + r.difference, 0);
               return (
-                <View key={p.id} style={[styles.scoreRow, currentPlayer?.username === p.username && turnPhase !== 'reveal' && styles.scoreRowActive]}>
-                  <Text style={[styles.scoreCell, { flex: 2 }]} numberOfLines={1}>{p.username}</Text>
+                <View key={p.id} style={[styles.scoreRow, currentPlayer?.displayName === p.displayName && turnPhase !== 'reveal' && styles.scoreRowActive]}>
+                  <Text style={[styles.scoreCell, { flex: 2 }]} numberOfLines={1}>{p.displayName}</Text>
                   {Array.from({ length: currentRoundNumber }, (_, roundIdx) => {
                     const roundResult = pResults.find(r => r.round === roundIdx + 1);
                     if (!roundResult) return <Text key={roundIdx} style={styles.scoreCell}>—</Text>;

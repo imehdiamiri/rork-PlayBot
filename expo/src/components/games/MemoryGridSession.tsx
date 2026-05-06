@@ -370,7 +370,7 @@ export function MemoryGridSession({ session }: Props) {
           {players.length > 1 ? (
             <View style={styles.readyTextGroup}>
               <View style={styles.turnPill}>
-                <Text style={styles.turnPillText}>Now · {players[boardState.currentPlayerIndex]?.username}</Text>
+                <Text style={styles.turnPillText}>Now · {players[boardState.currentPlayerIndex]?.displayName}</Text>
               </View>
               <Text style={styles.readySubtitle}>Your turn! Get ready to memorize.</Text>
             </View>
@@ -415,7 +415,7 @@ export function MemoryGridSession({ session }: Props) {
           <View style={{ flex: 1 }}>
             {players.length > 1 ? (
               <View style={styles.turnPill}>
-                <Text style={styles.turnPillText}>Now · {currentPlayer.username}</Text>
+                <Text style={styles.turnPillText}>Now · {currentPlayer.displayName}</Text>
               </View>
             ) : (
               <Text style={styles.headerTitle}>Memory Grid</Text>
@@ -479,7 +479,7 @@ export function MemoryGridSession({ session }: Props) {
         <View style={styles.centerContent}>
           <IconSymbol name="checkmark.circle.fill" size={56} color={Colors.green} />
           <Text style={[styles.readyTitle, { marginTop: 16 }]}>
-            {players[currentPlayerIndex]?.username} Finished!
+            {players[currentPlayerIndex]?.displayName} Finished!
           </Text>
           <Text style={styles.readySubtitle}>
             {lastResult ? `${formatTime(lastResult.elapsedSeconds)} · ${lastResult.moveCount} moves` : ''}
@@ -529,7 +529,7 @@ export function MemoryGridSession({ session }: Props) {
                   </Text>
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Text style={styles.rankName}>{player.username}</Text>
+                  <Text style={styles.rankName}>{player.displayName}</Text>
                   <Text style={styles.rankDetail}>
                     {result ? `${formatTime(result.elapsedSeconds)} · ${result.moveCount} moves` : '—'}
                   </Text>

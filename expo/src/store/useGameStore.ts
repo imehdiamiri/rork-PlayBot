@@ -1,12 +1,12 @@
 import { create } from 'zustand';
 import { GameType, GameMode } from '@/src/models/AppModels';
+import { Player, makeLocalPlayer } from '@/src/models/Player';
 
-export interface PlayerProfile {
-  id: string;
-  username: string;
-  isHost: boolean;
-  avatarId?: string;
-}
+/**
+ * @deprecated Use `Player` from `@/src/models/Player` directly.
+ * Kept as an alias so existing imports keep compiling during migration.
+ */
+export type PlayerProfile = Player;
 
 export enum MatchPhase {
   setup = 'setup',
@@ -21,7 +21,7 @@ export interface GameSession {
   game: GameType;
   mode: GameMode;
   roomCode?: string;
-  players: PlayerProfile[];
+  players: Player[];
   currentRoundIndex: number;
   phase: MatchPhase;
   rounds?: any[];
@@ -39,11 +39,7 @@ export const useGameStore = create<GameStoreState>((set) => ({
   activeSession: null,
   
   startSingleDeviceSession: (game, playerNames, rounds, gameConfig) => {
-    const players: PlayerProfile[] = playerNames.map((name, index) => ({
-      id: `player_${index}`,
-      username: name,
-      isHost: index === 0,
-    }));
+    const players: Player[] = playerNames.map((name, index) => makeLocalPlayer(name, index));
     
     set({
       activeSession: {

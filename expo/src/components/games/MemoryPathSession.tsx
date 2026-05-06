@@ -281,7 +281,7 @@ export function MemoryPathSession({ session }: Props) {
           <View style={s.iconBox}><IconSymbol name="map.fill" size={52} color="#00C7BE" /></View>
           <Text style={s.title}>Memory Path</Text>
           <Text style={s.sub}>Find the hidden path from Start to End!</Text>
-          {players.length > 1 && <View style={s.pill}><Text style={s.pillTx}>Now · {player.username}</Text></View>}
+          {players.length > 1 && <View style={s.pill}><Text style={s.pillTx}>Now · {player.displayName}</Text></View>}
           <View style={s.bubbleRow}>
             <View style={s.bubble}><Text style={s.bv}>{GRID}×{GRID}</Text><Text style={s.bl}>Grid</Text></View>
             {players.length > 1 && <View style={s.bubble}><Text style={s.bv}>{playerIndex+1}/{players.length}</Text><Text style={s.bl}>Player</Text></View>}
@@ -309,7 +309,7 @@ export function MemoryPathSession({ session }: Props) {
       <View style={s.container}>
         <View style={s.topBar}>
           <View style={{ flex: 1 }}>
-            <Text style={s.hName}>{player.username}</Text>
+            <Text style={s.hName}>{player.displayName}</Text>
             <Text style={s.hSub}>{stepsFound}/{stepsToFind} steps{gameMode === 'turnBased' ? ` · ${turnAttempts} tries left` : ''}</Text>
           </View>
           <View style={s.timerPill}>
@@ -358,7 +358,7 @@ export function MemoryPathSession({ session }: Props) {
         <View style={s.center}>
           <IconSymbol name="checkmark.circle.fill" size={56} color={Colors.green} />
           <Text style={s.title}>Path Cleared!</Text>
-          <Text style={s.sub}>{player.username} — {formatTime(elapsed)}</Text>
+          <Text style={s.sub}>{player.displayName} — {formatTime(elapsed)}</Text>
           <Pressable style={[s.btn, { marginTop: 40 }]} onPress={() => { setPlayerIndex(i => i+1); setPhase('ready'); }}>
             <Text style={s.btnTx}>{playerIndex+1 < players.length ? 'Next Player' : 'See Results'}</Text>
           </Pressable>
@@ -389,7 +389,7 @@ export function MemoryPathSession({ session }: Props) {
                 <Text style={[s.rankNum, i === 0 && { color: Colors.yellow }]}>{i+1}</Text>
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={s.rankName}>{p?.username}</Text>
+                <Text style={s.rankName}>{p?.displayName}</Text>
                 <Text style={s.rankDet}>{r.finished ? `${(r.timeMs/1000).toFixed(1)}s · ${r.attempts} tries` : `${r.progress} steps`}</Text>
               </View>
               {i === 0 && <IconSymbol name="crown.fill" size={16} color={Colors.yellow} />}

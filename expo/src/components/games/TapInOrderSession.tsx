@@ -183,7 +183,7 @@ export function TapInOrderSession({ session }: Props) {
           </View>
           <Text style={st.title}>Tap in Order</Text>
           <Text style={st.sub}>Memorize the numbers, then tap 1→{TILE_COUNT}</Text>
-          {players.length > 1 && <View style={st.pill}><Text style={st.pillTx}>Now · {player.username}</Text></View>}
+          {players.length > 1 && <View style={st.pill}><Text style={st.pillTx}>Now · {player.displayName}</Text></View>}
           <View style={st.label}><IconSymbol name="checkmark.seal.fill" size={12} color={Colors.green} /><Text style={st.labelTx}>Fewest mistakes wins</Text></View>
           <View style={st.bubbleRow}>
             <View style={st.bubble}><Text style={st.bv}>{GRID_SIZE}×{GRID_SIZE}</Text><Text style={st.bl}>Grid</Text></View>
@@ -220,7 +220,7 @@ export function TapInOrderSession({ session }: Props) {
         <View style={st.center}>
           <IconSymbol name="hand.raised.fill" size={56} color={Colors.orange} />
           <Text style={st.title}>Pass the Phone</Text>
-          <Text style={st.sub}>Give to {players[playerIndex + 1]?.username}</Text>
+          <Text style={st.sub}>Give to {players[playerIndex + 1]?.displayName}</Text>
           <Pressable style={[st.btn, { marginTop: 40 }]} onPress={() => { setPlayerIndex(i => i+1); setPhase('ready'); }}>
             <Text style={st.btnTx}>I'm Ready</Text>
           </Pressable>
@@ -239,7 +239,7 @@ export function TapInOrderSession({ session }: Props) {
         {/* Header */}
         <View style={st.topBar}>
           <View style={{ flex: 1 }}>
-            <Text style={st.hName}>{player.username}</Text>
+            <Text style={st.hName}>{player.displayName}</Text>
             <Text style={st.hSub}>
               {isPreview ? 'Memorize the numbers...' : `Next: ${nextExpected} · ${missTaps} mistakes`}
             </Text>
@@ -362,7 +362,7 @@ export function TapInOrderSession({ session }: Props) {
                 <Text style={[st.rankNum, i === 0 && { color: Colors.yellow }]}>{i+1}</Text>
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={st.rankName}>{p?.username}</Text>
+                <Text style={st.rankName}>{p?.displayName}</Text>
                 <Text style={st.rankDet}>{r.correctCount}/{r.totalTargets} correct · {r.missTaps} miss · {(r.timeMs/1000).toFixed(1)}s</Text>
               </View>
               {i === 0 && r.didFinish && <IconSymbol name="crown.fill" size={16} color={Colors.yellow} />}

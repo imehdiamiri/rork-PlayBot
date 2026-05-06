@@ -139,7 +139,7 @@ export function SpinBottleSession({ session }: Props) {
             <IconSymbol name={choice === 'truth' ? 'bubble.left.and.bubble.right.fill' as any : 'flame.fill'} size={14} color="#fff" />
             <Text style={st.choicePillTx}>{choice.toUpperCase()}</Text>
           </View>
-          <Text style={st.promptPlayer}>{selectedPlayer?.username}</Text>
+          <Text style={st.promptPlayer}>{selectedPlayer?.displayName}</Text>
 
           <View style={[st.promptCard, { borderColor: promptColor + '73' }]}>
             <LinearGradient colors={[promptColor + '6B', promptColor + '2E', 'rgba(0,0,0,0.2)']}
@@ -175,7 +175,7 @@ export function SpinBottleSession({ session }: Props) {
         <View>
           <Text style={st.headerTitle}>
             {phase === 'idle' ? 'Truth or Dare' : phase === 'spinning' ? 'Spinning...' :
-             phase === 'landed' ? `It's ${selectedPlayer?.username}!` : `${selectedPlayer?.username}'s turn`}
+             phase === 'landed' ? `It's ${selectedPlayer?.displayName}!` : `${selectedPlayer?.displayName}'s turn`}
           </Text>
           <Text style={st.headerSub}>
             {phase === 'idle' ? 'Tap Spin to start' : phase === 'spinning' ? 'Where will it land?' :
@@ -193,11 +193,11 @@ export function SpinBottleSession({ session }: Props) {
         {(phase === 'landed' || phase === 'choosing') && selectedPlayer && (
           <View style={[st.banner, { borderColor: accentColor + '73' }]}>
             <View style={[st.avatar, { backgroundColor: accentColor }]}>
-              <Text style={st.avatarTx}>{selectedPlayer.username.slice(0, 2).toUpperCase()}</Text>
+              <Text style={st.avatarTx}>{selectedPlayer.displayName.slice(0, 2).toUpperCase()}</Text>
             </View>
             <View style={{ flex: 1 }}>
               <Text style={st.bannerLabel}>SELECTED PLAYER</Text>
-              <Text style={st.bannerName}>{selectedPlayer.username}</Text>
+              <Text style={st.bannerName}>{selectedPlayer.displayName}</Text>
             </View>
             <IconSymbol name="sparkles" size={16} color={accentColor} />
           </View>
@@ -218,9 +218,9 @@ export function SpinBottleSession({ session }: Props) {
               transform: [{ translateX: x }, { translateY: y }],
             }]}>
               {isSelected ? (
-                <CurrentTurnPill playerName={p.username} accent={Colors.green} />
+                <CurrentTurnPill playerName={p.displayName} accent={Colors.green} />
               ) : (
-                <Text style={st.playerNodeTx}>{p.username}</Text>
+                <Text style={st.playerNodeTx}>{p.displayName}</Text>
               )}
             </View>
           );

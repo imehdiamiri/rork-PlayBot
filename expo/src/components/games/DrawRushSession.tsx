@@ -121,7 +121,7 @@ export function DrawRushSession({ session }: Props) {
     if (!t || !currentGuesser) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     AudioManager.play('buttonTap');
-    setAnswers(prev => [...prev, { id: `${Date.now()}`, playerId: currentGuesser.id, playerName: currentGuesser.username, text: t, isCorrect: false, isJudged: false }]);
+    setAnswers(prev => [...prev, { id: `${Date.now()}`, playerId: currentGuesser.id, playerName: currentGuesser.displayName, text: t, isCorrect: false, isJudged: false }]);
     setGuessText('');
     if (guessIdx + 1 >= guessers.length) { AudioManager.play('phaseChange'); setPhase('drawerJudging'); }
     else setGuessIdx(guessIdx + 1);
@@ -160,7 +160,7 @@ export function DrawRushSession({ session }: Props) {
       <View style={st.container}><View style={st.center}>
         <View style={[st.iconBox,{backgroundColor:'rgba(0,122,255,0.14)'}]}><IconSymbol name="pencil.and.scribble" size={52} color="#007AFF" /></View>
         <Text style={st.title}>Round {drawerIdx+1} of {players.length}</Text>
-        <Text style={[st.sub,{fontSize:22,color:'#007AFF',fontWeight:'bold',marginTop:12}]}>{drawer.username} draws!</Text>
+        <Text style={[st.sub,{fontSize:22,color:'#007AFF',fontWeight:'bold',marginTop:12}]}>{drawer.displayName} draws!</Text>
         <Text style={st.hint}>Everyone else will guess what's being drawn. 60s per turn.</Text>
         <Pressable style={st.btn} onPress={() => setPhase('drawerReveal')}><Text style={st.btnTx}>Continue</Text></Pressable>
       </View></View>
@@ -176,7 +176,7 @@ export function DrawRushSession({ session }: Props) {
         <View style={st.conceptCard}>
           <Text style={st.conceptTx}>{conceptMode === 'preset' ? concept : 'Draw anything!'}</Text>
         </View>
-        <Text style={st.hint}>{conceptMode === 'preset' ? `Only ${drawer.username} should see this!` : `${drawer.username}, think of something and draw it!`}</Text>
+        <Text style={st.hint}>{conceptMode === 'preset' ? `Only ${drawer.displayName} should see this!` : `${drawer.displayName}, think of something and draw it!`}</Text>
         <Pressable style={st.btn} onPress={handleStartDrawing}><Text style={st.btnTx}>Start Drawing</Text></Pressable>
       </View></View>
     );
@@ -187,7 +187,7 @@ export function DrawRushSession({ session }: Props) {
     return (
       <View style={st.container}>
         <View style={st.drawHeader}>
-          <Text style={st.drawTitle}>{drawer.username} is drawing</Text>
+          <Text style={st.drawTitle}>{drawer.displayName} is drawing</Text>
           <View style={st.timerPill}><IconSymbol name="timer" size={14} color={timeLeft<=10?Colors.red:'#5AC8FA'} />
             <Text style={[st.timerTx,timeLeft<=10&&{color:Colors.red}]}>{timeLeft}s</Text>
           </View>
@@ -233,7 +233,7 @@ export function DrawRushSession({ session }: Props) {
     return (
       <View style={st.container}>
         <View style={{padding:16,flex:1}}>
-          <Text style={st.title}>{currentGuesser?.username}'s Guess</Text>
+          <Text style={st.title}>{currentGuesser?.displayName}'s Guess</Text>
           <Text style={[st.sub,{marginBottom:16}]}>Look at the drawing and type your answer</Text>
           <View style={[st.canvas,{width:canvasSize,height:canvasSize*0.6}]}>
             <Svg width={canvasSize} height={canvasSize*0.6} style={{backgroundColor:'#1C1C1E',borderRadius:16}}>
@@ -252,7 +252,7 @@ export function DrawRushSession({ session }: Props) {
     return (
       <View style={st.container}>
         <ScrollView contentContainerStyle={{padding:16,paddingBottom:40}}>
-          <Text style={[st.title,{textAlign:'center'}]}>{drawer.username}, Judge the Answers</Text>
+          <Text style={[st.title,{textAlign:'center'}]}>{drawer.displayName}, Judge the Answers</Text>
           <Text style={[st.sub,{textAlign:'center',marginBottom:4}]}>The word was: <Text style={{color:Colors.yellow,fontWeight:'bold'}}>{concept}</Text></Text>
           <Text style={[st.sub,{textAlign:'center',marginBottom:20}]}>Mark each guess as correct or wrong</Text>
           {answers.map(a => (
@@ -288,7 +288,7 @@ export function DrawRushSession({ session }: Props) {
           {sorted.map((p,i) => (
             <View key={p.id} style={[st.rankRow,i===0&&st.rankFirst]}>
               <Text style={st.rankNum}>{i+1}</Text>
-              <Text style={st.rankName}>{p.username}</Text>
+              <Text style={st.rankName}>{p.displayName}</Text>
               <Text style={st.rankScore}>{scores[p.id]||0}</Text>
             </View>
           ))}
@@ -322,7 +322,7 @@ export function DrawRushSession({ session }: Props) {
         {sorted.map((p,i) => (
           <View key={p.id} style={[st.rankRow,i===0&&st.rankFirst]}>
             <Text style={st.rankNum}>{['🥇','🥈','🥉'][i]||`#${i+1}`}</Text>
-            <Text style={st.rankName}>{p.username}</Text>
+            <Text style={st.rankName}>{p.displayName}</Text>
             <Text style={st.rankScore}>{scores[p.id]||0} pts</Text>
           </View>
         ))}

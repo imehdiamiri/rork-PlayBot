@@ -1,20 +1,22 @@
 import { rtdb as database } from '../lib/firebase';
-import { ref, set, get, onValue, update, remove, push, onDisconnect } from 'firebase/database';
-import { GameType } from '../models/AppModels';
+import { ref, set, get, onValue, update, remove, onDisconnect } from 'firebase/database';
+import { Player } from '../models/Player';
 
-export interface MultiplayerPlayer {
-  id: string;
-  name: string;
-  isHost: boolean;
-  isMe: boolean;
-  isReady?: boolean;
-}
+/**
+ * MultiplayerService — RTDB-backed room lifecycle.
+ *
+ * Player records use the canonical {@link Player} shape so room players,
+ * single-device players, friend players, and lobby players are all the
+ * same type across the app.
+ */
+
+export type MultiplayerPlayer = Player;
 
 export interface MultiplayerRoom {
   roomCode: string;
   gameId: string;
   hostId: string;
-  players: Record<string, MultiplayerPlayer>;
+  players: Record<string, Player>;
   status: 'waiting' | 'playing' | 'closed';
   createdAt: number;
 }
@@ -27,13 +29,13 @@ class MultiplayerService {
   async createRoom(gameId: string, hostName: string, hostId: string): Promise<string> {
     const roomCode = this.generateRoomCode();
     const roomRef = ref(database, `rooms/${roomCode}`);
-    
-    const initialPlayer: MultiplayerPlayer = {
+
+    const initialPlayer: Player = {
       id: hostId,
-      name: hostName,
+      displayName: hostName,
       isHost: true,
-      isMe: true,
-      isReady: true
+      isLocal: true,
+      isReady: true,
     };
 
     await set(roomRef, {
@@ -42,9 +44,7 @@ class MultiplayerService {
       hostId,
       status: 'waiting',
       createdAt: Date.now(),
-      players: {
-        [hostId]: initialPlayer
-      }
+      players: { [hostId]: initialPlayer },
     });
 
     await onDisconnect(roomRef).remove();
@@ -55,27 +55,25 @@ class MultiplayerService {
   async joinRoom(roomCode: string, playerName: string, playerId: string): Promise<boolean> {
     const roomRef = ref(database, `rooms/${roomCode}`);
     const snapshot = await get(roomRef);
-    
+
     if (!snapshot.exists()) {
-      throw new Error("Room not found");
+      throw new Error('Room not found');
     }
 
     const roomData = snapshot.val() as MultiplayerRoom;
     if (roomData.status !== 'waiting') {
-      throw new Error("Game already started");
+      throw new Error('Game already started');
     }
 
-    const newPlayer: MultiplayerPlayer = {
+    const newPlayer: Player = {
       id: playerId,
-      name: playerName,
+      displayName: playerName,
       isHost: false,
-      isMe: true,
-      isReady: false
+      isLocal: true,
+      isReady: false,
     };
 
-    await update(ref(database, `rooms/${roomCode}/players`), {
-      [playerId]: newPlayer
-    });
+    await update(ref(database, `rooms/${roomCode}/players`), { [playerId]: newPlayer });
 
     const playerRef = ref(database, `rooms/${roomCode}/players/${playerId}`);
     await onDisconnect(playerRef).remove();
@@ -86,11 +84,7 @@ class MultiplayerService {
   listenToRoom(roomCode: string, callback: (room: MultiplayerRoom | null) => void): () => void {
     const roomRef = ref(database, `rooms/${roomCode}`);
     const unsubscribe = onValue(roomRef, (snapshot) => {
-      if (snapshot.exists()) {
-        callback(snapshot.val() as MultiplayerRoom);
-      } else {
-        callback(null);
-      }
+      callback(snapshot.exists() ? (snapshot.val() as MultiplayerRoom) : null);
     });
     return unsubscribe;
   }

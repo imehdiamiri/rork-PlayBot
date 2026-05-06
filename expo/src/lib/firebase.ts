@@ -1,35 +1,51 @@
 /**
- * Firebase — Complete configuration for PlayVirals
+ * Firebase — Canonical realtime backend for PartyBot.
  *
  * Services initialized:
- *  - Auth (with AsyncStorage persistence for RN)
+ *  - Auth (with AsyncStorage persistence on RN)
  *  - Firestore (user profiles, game history)
- *  - Realtime Database (live sessions, lobbies, economy)
- *  - Storage (user avatars, generated content)
+ *  - Realtime Database (live sessions, lobbies, presence, economy)
+ *  - Storage (avatars, generated content)
+ *  - Functions (server-validated mutations, AI proxy)
  *
- * Config is read from EXPO_PUBLIC_ env vars (set in .env).
- * Falls back to hardcoded defaults for development convenience.
+ * Config is read from EXPO_PUBLIC_FIREBASE_* env vars. There is no hardcoded
+ * fallback: shipping a fallback would leak the production project into every
+ * forked build. Missing config throws at startup so misconfiguration is loud.
  */
 
 import { initializeApp, getApps, FirebaseApp } from 'firebase/app';
 // @ts-ignore: getReactNativePersistence is valid at runtime in RN context
 import { initializeAuth, getReactNativePersistence, getAuth, Auth } from 'firebase/auth';
 import { getFirestore, Firestore, doc, setDoc, serverTimestamp } from 'firebase/firestore';
-import { getDatabase, Database, ref, set as fbSet } from 'firebase/database';
+import { getDatabase, Database, ref, set as fbSet, onDisconnect } from 'firebase/database';
 import { getStorage, FirebaseStorage } from 'firebase/storage';
+import { getFunctions, Functions } from 'firebase/functions';
 import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // ─── Configuration ───
 
+function readEnv(name: string): string {
+  const value = process.env[name];
+  if (!value) {
+    // We throw rather than silently shipping a fallback project so that
+    // misconfigured forks fail loudly in dev instead of writing to the
+    // wrong production database.
+    throw new Error(
+      `Firebase: missing required env var ${name}. Set it in expo/.env (see .env.example).`
+    );
+  }
+  return value;
+}
+
 const firebaseConfig = {
-  apiKey:            process.env.EXPO_PUBLIC_FIREBASE_API_KEY            || 'AIzaSyAs2iX3l4sqg1F5QTMdNv0kx4z1H8hOqCU',
-  authDomain:        process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN        || 'partyplay-8.firebaseapp.com',
-  projectId:         process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID         || 'partyplay-8',
-  storageBucket:     process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET     || 'partyplay-8.firebasestorage.app',
-  messagingSenderId: process.env.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || '1003126250476',
-  appId:             process.env.EXPO_PUBLIC_FIREBASE_APP_ID             || '1:1003126250476:web:6914df967838f18ffa7ec9',
-  databaseURL:       process.env.EXPO_PUBLIC_FIREBASE_DATABASE_URL       || 'https://partyplay-8-default-rtdb.firebaseio.com',
+  apiKey: readEnv('EXPO_PUBLIC_FIREBASE_API_KEY'),
+  authDomain: readEnv('EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN'),
+  projectId: readEnv('EXPO_PUBLIC_FIREBASE_PROJECT_ID'),
+  storageBucket: readEnv('EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET'),
+  messagingSenderId: readEnv('EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID'),
+  appId: readEnv('EXPO_PUBLIC_FIREBASE_APP_ID'),
+  databaseURL: readEnv('EXPO_PUBLIC_FIREBASE_DATABASE_URL'),
 };
 
 // ─── App ───
@@ -39,8 +55,6 @@ const app: FirebaseApp = getApps().length === 0
   : getApps()[0];
 
 // ─── Auth ───
-// On native (iOS/Android) we use AsyncStorage persistence.
-// On web, Firebase handles persistence automatically via indexedDB.
 
 let auth: Auth;
 try {
@@ -59,20 +73,12 @@ try {
   }
 }
 
-// ─── Firestore (user profiles, game history, ideas) ───
-
 const db: Firestore = getFirestore(app);
-
-// ─── Realtime Database (live game sessions, lobbies, presence, economy) ───
-
 const rtdb: Database = getDatabase(app);
-
-// ─── Storage (avatars, generated content) ───
-
 const storage: FirebaseStorage = getStorage(app);
+const functions: Functions = getFunctions(app);
 
 // ─── User Profile Sync ───
-// Call this after sign-in / sign-up to ensure user data exists in RTDB + Firestore.
 
 interface UserProfileData {
   uid: string;
@@ -86,10 +92,10 @@ async function syncUserProfile(data: UserProfileData): Promise<void> {
   try {
     const now = Date.now();
 
-    // Write to RTDB (for realtime lookups: friend search, presence, economy)
     const rtdbUserRef = ref(rtdb, `users/${data.uid}`);
     await fbSet(rtdbUserRef, {
       username: data.username,
+      usernameLower: data.username.toLowerCase(),
       email: data.email || null,
       provider: data.provider,
       avatarURL: data.avatarURL || null,
@@ -97,7 +103,6 @@ async function syncUserProfile(data: UserProfileData): Promise<void> {
       updatedAt: now,
     });
 
-    // Write to Firestore (for richer queries, game history)
     await setDoc(doc(db, 'users', data.uid), {
       username: data.username,
       email: data.email || null,
@@ -112,13 +117,17 @@ async function syncUserProfile(data: UserProfileData): Promise<void> {
 }
 
 // ─── Presence System ───
-// Update user online status in RTDB (call on app foreground/background).
 
 async function setUserOnline(uid: string): Promise<void> {
   try {
     const presenceRef = ref(rtdb, `presence/${uid}`);
     await fbSet(presenceRef, {
       online: true,
+      lastSeen: Date.now(),
+    });
+    // Auto-clear presence on disconnect (server-side timer).
+    onDisconnect(presenceRef).set({
+      online: false,
       lastSeen: Date.now(),
     });
   } catch (e) {
@@ -138,38 +147,13 @@ async function setUserOffline(uid: string): Promise<void> {
   }
 }
 
-// ─── RTDB Structure Reference ───
-//
-// users/
-//   {uid}/
-//     username, email, provider, avatarURL, lastSeen, updatedAt
-//     wallet/  { balance, lastDailyClaim, updatedAt }
-//     inviteCode
-//
-// presence/
-//   {uid}/ { online, lastSeen }
-//
-// friendships/
-//   {uid}/{friendUid}/ { since, status }
-//
-// friendRequests/
-//   {requestId}/ { fromUserId, toUserId, status, createdAt }
-//
-// rooms/
-//   {roomCode}/ { gameType, playMode, hostId, players, createdAt, status }
-//
-// sessions/
-//   {sessionId}/ { gameState, scores, phase, ... }
-//
-// telemetry/
-//   {eventId}/ { type, userId, payload, timestamp }
-
 export {
   app,
   auth,
   db,
   rtdb,
   storage,
+  functions,
   firebaseConfig,
   syncUserProfile,
   setUserOnline,

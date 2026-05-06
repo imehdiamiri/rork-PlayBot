@@ -202,7 +202,7 @@ export function ColorTrapSession({ session }: Props) {
         </View>
         <Text style={st.title}>Color Trap</Text>
         <Text style={st.sub}>Tap every tile EXCEPT the forbidden color!</Text>
-        {players.length > 1 && <View style={st.pill}><Text style={st.pillTx}>Now · {player.username}</Text></View>}
+        {players.length > 1 && <View style={st.pill}><Text style={st.pillTx}>Now · {player.displayName}</Text></View>}
 
         {/* Difficulty picker */}
         <View style={{ flexDirection: 'row', gap: 8, marginTop: 24 }}>
@@ -288,7 +288,7 @@ export function ColorTrapSession({ session }: Props) {
         <IconSymbol name={last?.eliminated ? 'xmark.circle.fill' : 'checkmark.circle.fill'} size={56}
           color={last?.eliminated ? Colors.red : Colors.green} />
         <Text style={st.title}>{last?.eliminated ? 'Eliminated!' : 'Time\'s Up!'}</Text>
-        <Text style={st.sub}>{player.username} — Score: {last?.score}</Text>
+        <Text style={st.sub}>{player.displayName} — Score: {last?.score}</Text>
         <Pressable style={[st.btn, { marginTop: 40 }]} onPress={() => { setPlayerIdx(i => i+1); setPhase('ready'); }}>
           <Text style={st.btnTx}>Next Player</Text>
         </Pressable>
@@ -313,7 +313,7 @@ export function ColorTrapSession({ session }: Props) {
                 <Text style={[st.rankNum, i === 0 && { color: Colors.yellow }]}>{i+1}</Text>
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={st.rankName}>{p?.username}</Text>
+                <Text style={st.rankName}>{p?.displayName}</Text>
                 <Text style={st.rankDet}>{r.hits} hits · {r.fails} fails · {r.survivalTime.toFixed(1)}s{r.eliminated ? ' · Eliminated' : ''}</Text>
               </View>
               <Text style={{ color: Colors.orange, fontSize: 17, fontWeight: 'bold' }}>{r.score}</Text>

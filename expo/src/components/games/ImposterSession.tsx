@@ -220,7 +220,7 @@ export function ImposterSession({ session }: Props) {
         <ScrollView contentContainerStyle={styles.centerContent}>
           <Text style={styles.title}>Pass the phone to</Text>
           <Text style={[styles.playerName, { color: getPlayerColor(activePlayerIndex) }]}>
-            {currentPlayer?.username}
+            {currentPlayer?.displayName}
           </Text>
 
           <View style={styles.card}>
@@ -290,9 +290,9 @@ export function ImposterSession({ session }: Props) {
               {session.players.map((p, i) => (
                 <View key={p.id} style={styles.playerRow}>
                   <View style={[styles.avatarCircle, { backgroundColor: getPlayerColor(i) }]}>
-                    <Text style={styles.avatarInitials}>{p.username.substring(0, 1).toUpperCase()}</Text>
+                    <Text style={styles.avatarInitials}>{p.displayName.substring(0, 1).toUpperCase()}</Text>
                   </View>
-                  <Text style={styles.playerRowName}>{p.username}</Text>
+                  <Text style={styles.playerRowName}>{p.displayName}</Text>
                 </View>
               ))}
             </View>
@@ -309,7 +309,7 @@ export function ImposterSession({ session }: Props) {
           <View style={styles.card}>
             <View style={styles.centerItems}>
               <IconSymbol name="magnifyingglass.circle.fill" size={48} color="#AF52DE" />
-              <Text style={styles.title}>{currentPlayer?.username}'s Clue</Text>
+              <Text style={styles.title}>{currentPlayer?.displayName}'s Clue</Text>
               <Text style={styles.subtitle}>Give a one-word clue about the secret word</Text>
             </View>
 
@@ -344,7 +344,7 @@ export function ImposterSession({ session }: Props) {
                   const idx = session.players.findIndex(p => p.id === pid);
                   return (
                     <View key={pid} style={styles.resultRow}>
-                      <Text style={[styles.resultName, { color: getPlayerColor(idx) }]}>{player?.username}</Text>
+                      <Text style={[styles.resultName, { color: getPlayerColor(idx) }]}>{player?.displayName}</Text>
                       <Text style={{ color: 'white', fontSize: 15, fontWeight: '600' }}>"{clue}"</Text>
                     </View>
                   );
@@ -360,7 +360,7 @@ export function ImposterSession({ session }: Props) {
           <View style={styles.card}>
             <View style={styles.centerItems}>
               <IconSymbol name="hand.raised.fill" size={48} color="#FF2D55" />
-              <Text style={styles.title}>{currentPlayer?.username}'s Vote</Text>
+              <Text style={styles.title}>{currentPlayer?.displayName}'s Vote</Text>
               <Text style={styles.subtitle}>Who do you think is the Imposter?</Text>
             </View>
             
@@ -371,7 +371,7 @@ export function ImposterSession({ session }: Props) {
                   style={[styles.candidateBtn, selectedSuspect === p.id && styles.candidateBtnActive]}
                   onPress={() => setSelectedSuspect(p.id)}
                 >
-                  <Text style={[styles.candidateText, { color: getPlayerColor(session.players.findIndex(x => x.id === p.id)) }]}>{p.username}</Text>
+                  <Text style={[styles.candidateText, { color: getPlayerColor(session.players.findIndex(x => x.id === p.id)) }]}>{p.displayName}</Text>
                   {selectedSuspect === p.id && <IconSymbol name="checkmark.circle.fill" size={20} color="#007AFF" />}
                 </Pressable>
               ))}
@@ -398,7 +398,7 @@ export function ImposterSession({ session }: Props) {
               if (count > maxVotes) { maxVotes = count; topSuspectId = sid; }
             });
             const imposterCaught = topSuspectId === imposterId;
-            const imposterName = session.players.find(p => p.id === imposterId)?.username;
+            const imposterName = session.players.find(p => p.id === imposterId)?.displayName;
 
             return (
               <>
@@ -427,7 +427,7 @@ export function ImposterSession({ session }: Props) {
                       return (
                         <View key={p.id} style={styles.resultRow}>
                           <Text style={[styles.resultName, { color: getPlayerColor(session.players.indexOf(p)) }]}>
-                            {p.username} {p.id === imposterId ? '(Imposter)' : ''}
+                            {p.displayName} {p.id === imposterId ? '(Imposter)' : ''}
                           </Text>
                           <Text style={styles.resultCount}>{count} votes</Text>
                         </View>
@@ -453,7 +453,7 @@ export function ImposterSession({ session }: Props) {
             {session.players.slice().sort((a,b) => scores[b.id] - scores[a.id]).map((p, i) => (
               <View key={p.id} style={styles.leaderboardRow}>
                 <Text style={[styles.rank, i === 0 && { color: Colors.yellow }]}>#{i + 1}</Text>
-                <Text style={[styles.leaderboardName, { color: getPlayerColor(session.players.findIndex(x => x.id === p.id)) }]}>{p.username}</Text>
+                <Text style={[styles.leaderboardName, { color: getPlayerColor(session.players.findIndex(x => x.id === p.id)) }]}>{p.displayName}</Text>
                 <Text style={styles.scoreText}>{scores[p.id]} pts</Text>
               </View>
             ))}
@@ -474,7 +474,7 @@ export function ImposterSession({ session }: Props) {
             {session.players.slice().sort((a,b) => (scores[b.id] || 0) - (scores[a.id] || 0)).map((p, i) => (
               <View key={p.id} style={styles.leaderboardRow}>
                 <Text style={[styles.rank, i === 0 && { color: Colors.yellow }]}>#{i + 1}</Text>
-                <Text style={[styles.leaderboardName, { color: getPlayerColor(session.players.findIndex(x => x.id === p.id)) }]}>{p.username}</Text>
+                <Text style={[styles.leaderboardName, { color: getPlayerColor(session.players.findIndex(x => x.id === p.id)) }]}>{p.displayName}</Text>
                 <Text style={styles.scoreText}>{scores[p.id] || 0} pts</Text>
               </View>
             ))}
