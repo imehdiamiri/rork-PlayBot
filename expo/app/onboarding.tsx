@@ -4,6 +4,7 @@ import {
   Image,
   Keyboard,
   KeyboardAvoidingView,
+  KeyboardEvent,
   Platform,
   Pressable,
   StyleSheet,
@@ -40,10 +41,10 @@ const PAGES = [0, 1, 2, 3] as const;
 type PageIndex = 0 | 1 | 2 | 3;
 
 const ART = {
-  bored: 'https://r2-pub.rork.com/generated-images/7ec86645-ba05-4746-ad6e-029f409c341d.png',
-  party: 'https://r2-pub.rork.com/generated-images/9c729a13-c88b-41ba-bdbf-3aeb1c217270.png',
-  pass: 'https://r2-pub.rork.com/generated-images/b842f3a3-af60-4131-9712-e765a41e13dc.png',
-  hero: 'https://r2-pub.rork.com/generated-images/283e73aa-63fa-4086-87af-b927506cc5c4.png',
+  bored: 'https://r2-pub.rork.com/generated-images/734a0866-d6bf-466b-a59f-75699c1277b8.png',
+  party: 'https://r2-pub.rork.com/generated-images/f4003ed7-4d05-4f0c-a05e-3de56339e939.png',
+  pass: 'https://r2-pub.rork.com/generated-images/36215853-9ffb-45c9-a918-a39a66058838.png',
+  hero: 'https://r2-pub.rork.com/generated-images/ec6d76b0-e20d-4a63-8ace-1e1379180c90.png',
 } as const;
 
 function EnterStage({ active, delay = 0, children, style }: { active: boolean; delay?: number; children: React.ReactNode; style?: any }) {
@@ -66,7 +67,7 @@ function EnterStage({ active, delay = 0, children, style }: { active: boolean; d
   return <Animated.View style={[style, animatedStyle]}>{children}</Animated.View>;
 }
 
-function FloatingArt({ active, source, glowColor }: { active: boolean; source: string; glowColor: string }) {
+function FloatingArt({ active, source, glowColor, compact }: { active: boolean; source: string; glowColor: string; compact?: boolean }) {
   const float = useSharedValue(0);
 
   useEffect(() => {
@@ -88,12 +89,16 @@ function FloatingArt({ active, source, glowColor }: { active: boolean; source: s
     ],
   }));
 
+  const stageStyle = compact ? styles.artStageCompact : styles.artStage;
+  const imgStyle = compact ? styles.artImageCompact : styles.artImage;
+  const glowSize = compact ? 200 : 320;
+
   return (
     <EnterStage active={active}>
-      <View style={styles.artStage}>
-        <GlowView color={glowColor} size={320} style={styles.artGlow} />
+      <View style={stageStyle}>
+        <GlowView color={glowColor} size={glowSize} style={styles.artGlow} />
         <Animated.View style={floatStyle}>
-          <Image source={{ uri: source }} style={styles.artImage} resizeMode="contain" />
+          <Image source={{ uri: source }} style={imgStyle} resizeMode="contain" />
         </Animated.View>
       </View>
     </EnterStage>
@@ -159,6 +164,7 @@ export default function OnboardingScreen() {
   const { setHasCompletedOnboarding, setPlayerName } = useSettingsStore();
   const [currentPage, setCurrentPage] = useState<PageIndex>(0);
   const [name, setName] = useState<string>('');
+  const [keyboardVisible, setKeyboardVisible] = useState<boolean>(false);
   const scrollViewRef = useRef<Animated.ScrollView>(null);
   const inputRef = useRef<TextInput>(null);
   const scrollX = useSharedValue(0);
@@ -166,6 +172,17 @@ export default function OnboardingScreen() {
   useEffect(() => {
     if (currentPage === 2) setTimeout(() => inputRef.current?.focus(), 460);
   }, [currentPage]);
+
+  useEffect(() => {
+    const showEvt = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
+    const hideEvt = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
+    const showSub = Keyboard.addListener(showEvt, (_e: KeyboardEvent) => setKeyboardVisible(true));
+    const hideSub = Keyboard.addListener(hideEvt, () => setKeyboardVisible(false));
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, []);
 
   const scrollHandler = useAnimatedScrollHandler({
     onScroll: (event) => { scrollX.value = event.contentOffset.x; },
@@ -230,8 +247,9 @@ export default function OnboardingScreen() {
               eyebrow="PLAYER #1"
               title="What's your name?"
               subtitle="So we can call you out by name during the chaos."
+              compact={keyboardVisible}
             >
-              <FloatingArt active={currentPage === 2} source={ART.pass} glowColor="rgba(10, 132, 255, 0.5)" />
+              <FloatingArt active={currentPage === 2} source={ART.pass} glowColor="rgba(10, 132, 255, 0.5)" compact={keyboardVisible} />
               <View style={styles.inputShell}>
                 <TextInput
                   ref={inputRef}
@@ -287,15 +305,15 @@ export default function OnboardingScreen() {
   );
 }
 
-function OnboardPage({ active, eyebrow, title, subtitle, children }: { active: boolean; eyebrow: string; title: string; subtitle: string; children: React.ReactNode }) {
+function OnboardPage({ active, eyebrow, title, subtitle, children, compact }: { active: boolean; eyebrow: string; title: string; subtitle: string; children: React.ReactNode; compact?: boolean }) {
   return (
-    <View style={styles.page}>
-      <View style={styles.artWrap}>{children}</View>
+    <View style={[styles.page, compact && styles.pageCompact]}>
+      <View style={[styles.artWrap, compact && styles.artWrapCompact]}>{children}</View>
       <EnterStage active={active} delay={120}>
         <View style={styles.copyCard}>
           <Text style={styles.eyebrow}>{eyebrow}</Text>
-          <Text style={styles.title}>{title}</Text>
-          <Text style={styles.subtitle}>{subtitle}</Text>
+          {!compact && <Text style={styles.title}>{title}</Text>}
+          {!compact && <Text style={styles.subtitle}>{subtitle}</Text>}
         </View>
       </EnterStage>
     </View>
@@ -303,14 +321,19 @@ function OnboardPage({ active, eyebrow, title, subtitle, children }: { active: b
 }
 
 const ART_SIZE = Math.min(SCREEN_WIDTH - 140, 240);
+const ART_SIZE_COMPACT = 120;
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.black },
   page: { width: SCREEN_WIDTH, flex: 1, justifyContent: 'center', paddingHorizontal: 22, paddingBottom: 180, paddingTop: 20 },
+  pageCompact: { justifyContent: 'flex-start', paddingTop: 24, paddingBottom: 200 },
   artWrap: { alignItems: 'center', justifyContent: 'center', minHeight: ART_SIZE + 16, marginBottom: 8 },
+  artWrapCompact: { minHeight: ART_SIZE_COMPACT + 8, marginBottom: 4 },
   artStage: { width: ART_SIZE, height: ART_SIZE, alignItems: 'center', justifyContent: 'center' },
+  artStageCompact: { width: ART_SIZE_COMPACT, height: ART_SIZE_COMPACT, alignItems: 'center', justifyContent: 'center' },
   artGlow: { position: 'absolute', alignSelf: 'center' },
   artImage: { width: ART_SIZE, height: ART_SIZE },
+  artImageCompact: { width: ART_SIZE_COMPACT, height: ART_SIZE_COMPACT },
   heroNameBadge: {
     position: 'absolute',
     alignSelf: 'center',
