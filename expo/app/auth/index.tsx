@@ -45,7 +45,6 @@ export default function AuthScreen() {
     signUp,
     signInWithApple,
     signInWithGoogle,
-    signInAnonymously
   } = useAuthStore();
 
   const handleSubmit = () => {
@@ -59,14 +58,6 @@ export default function AuthScreen() {
     } else {
       signUp(trimmedUser, trimmedPass).catch(() => {});
     }
-  };
-
-  const handleGuest = () => {
-    signInAnonymously()
-      .then(() => {
-        router.replace('/');
-      })
-      .catch(() => {});
   };
 
   return (
@@ -228,16 +219,8 @@ export default function AuthScreen() {
               </TouchableOpacity>
             </View>
 
-            {/* Guest + Legal */}
+            {/* Legal */}
             <View style={styles.footerSection}>
-              <TouchableOpacity onPress={handleGuest} style={styles.guestBtn} activeOpacity={0.7}>
-                <Text style={styles.guestText}>Skip for now</Text>
-                <Ionicons name="arrow-forward" size={14} color="rgba(255,255,255,0.5)" />
-              </TouchableOpacity>
-              <Text style={styles.hintText}>
-                You can sign in anytime from your profile
-              </Text>
-              
               <View style={styles.legalRow}>
                 <TouchableOpacity onPress={() => Linking.openURL(AppConstants.URLs.privacyPolicy)}>
                   <Text style={styles.legalLink}>Privacy Policy</Text>

@@ -27,7 +27,7 @@ export const unstable_settings = {
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
-  const { initialize, currentUser, isInitialized } = useAuthStore();
+  const { initialize, currentUser, isInitialized, signInAnonymously } = useAuthStore();
   const { hasCompletedOnboarding } = useSettingsStore();
   const segments = useSegments();
   const router = useRouter();
@@ -83,24 +83,26 @@ export default function RootLayout() {
     const inAuthGroup = segments[0] === 'auth';
     const inOnboarding = segments[0] === 'onboarding';
 
-    // Ensure we route after the root layout has finished mounting
-    // On web, allow deep-linking to game, tools, paywall, etc. without requiring auth
-    const isProtectedRoute = segments[0] === '(tabs)' || (segments.length as number) === 0;
     const timer = setTimeout(() => {
       if (!hasCompletedOnboarding && !inOnboarding) {
         router.replace('/onboarding');
-      } else if (hasCompletedOnboarding) {
-        if (!currentUser && !inAuthGroup && isProtectedRoute) {
-          router.replace('/auth');
-        } else if (currentUser && (inAuthGroup || inOnboarding)) {
-          // Only redirect away from auth if user is NOT anonymous (guest).
-          // Anonymous users visiting /auth want to upgrade to a real account,
-          // so let them stay on the auth screen.
-          const isAnonymous = currentUser.isAnonymous;
-          if (!isAnonymous) {
-            router.replace('/(tabs)');
-          }
+        return;
+      }
+
+      if (hasCompletedOnboarding) {
+        // Auto-create an anonymous session so the user can start playing offline
+        // immediately. The /auth screen is only shown when the user explicitly
+        // navigates there (e.g. to upgrade their account from profile/paywall
+        // or for online features that require a real account).
+        if (!currentUser) {
+          signInAnonymously().catch(() => {});
         }
+
+        if (currentUser && inOnboarding) {
+          router.replace('/(tabs)');
+        }
+        // Note: we no longer auto-redirect into /auth. Users on /auth stay there
+        // until they sign in/up or close the screen themselves.
       }
     }, 10);
 
