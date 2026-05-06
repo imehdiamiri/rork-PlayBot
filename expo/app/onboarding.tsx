@@ -43,8 +43,8 @@ type PageIndex = 0 | 1 | 2 | 3;
 const ART = {
   bored: 'https://r2-pub.rork.com/generated-images/d83d7cb4-0e26-425d-9e9d-8579f00e0fff.png',
   party: 'https://r2-pub.rork.com/generated-images/d1bcfc24-3a9b-4220-b92a-bd88751154a7.png',
-  portrait: 'https://r2-pub.rork.com/generated-images/698033d3-1746-473f-866e-3e74a2fb61ec.png',
-  hero: 'https://r2-pub.rork.com/generated-images/bb30bb92-dff1-446a-9492-78ed38ea6d8c.png',
+  portrait: 'https://r2-pub.rork.com/generated-images/1ae8dd8f-20e6-4ba4-9408-4cc0af3a42ca.png',
+  hero: 'https://r2-pub.rork.com/generated-images/1ae8dd8f-20e6-4ba4-9408-4cc0af3a42ca.png',
 } as const;
 
 function EnterStage({ active, delay = 0, children, style }: { active: boolean; delay?: number; children: React.ReactNode; style?: any }) {
