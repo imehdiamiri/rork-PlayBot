@@ -38,12 +38,12 @@ function TabIndicator({ focused }: { focused: boolean }) {
   }));
 
   return (
-    <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFillObject, { borderRadius: 16 }, aStyle]}>
+    <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFillObject, { borderRadius: 22 }, aStyle]}>
       <View
         style={[
           StyleSheet.absoluteFillObject,
           {
-            borderRadius: 16,
+            borderRadius: 22,
             backgroundColor: 'rgba(10,132,255,0.18)',
             borderWidth: 0.5,
             borderColor: 'rgba(10,132,255,0.45)',
@@ -104,23 +104,23 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
                   android_ripple={{
                     color: 'rgba(10,132,255,0.20)',
                     borderless: true,
-                    radius: 32,
+                    radius: 40,
                   }}
                   accessibilityRole="button"
                   accessibilityState={isFocused ? { selected: true } : {}}
                   accessibilityLabel={options.tabBarAccessibilityLabel}
                   style={styles.tabItem}
                 >
-                  <View style={styles.iconContainer}>
+                  <View style={styles.pill}>
                     <TabIndicator focused={isFocused} />
-                    <IconSymbol size={28} name={item.icon as any} color={tint} />
+                    <IconSymbol size={26} name={item.icon as any} color={tint} />
+                    <Text
+                      style={[styles.label, isFocused && styles.labelActive]}
+                      numberOfLines={1}
+                    >
+                      {item.label}
+                    </Text>
                   </View>
-                  <Text
-                    style={[styles.label, isFocused && styles.labelActive]}
-                    numberOfLines={1}
-                  >
-                    {item.label}
-                  </Text>
                 </Pressable>
               );
             })}
@@ -167,14 +167,15 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 2,
   },
-  iconContainer: {
-    width: 56,
-    height: 36,
-    borderRadius: 16,
+  pill: {
+    minWidth: 64,
+    height: 60,
+    paddingHorizontal: 12,
+    borderRadius: 22,
     alignItems: 'center',
     justifyContent: 'center',
+    gap: 2,
   },
   label: {
     fontFamily: 'Viral-Black',
