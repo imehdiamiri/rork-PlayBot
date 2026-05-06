@@ -142,9 +142,11 @@ function HeroArt({ active, name }: { active: boolean; name: string }) {
         <Animated.View style={floatStyle}>
           <Image source={{ uri: ART.hero }} style={styles.artImage} resizeMode="contain" />
         </Animated.View>
-        <Animated.View style={[styles.heroNameBadge, badgeStyle]} pointerEvents="none">
-          <Text style={styles.heroNameText} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.5}>{heroName.toUpperCase()}</Text>
-        </Animated.View>
+        <View style={styles.heroNameBadge} pointerEvents="none">
+          <Animated.View style={[styles.heroNameBadgeInner, badgeStyle]}>
+            <Text style={styles.heroNameText} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.5}>{heroName.toUpperCase()}</Text>
+          </Animated.View>
+        </View>
       </View>
     </EnterStage>
   );
@@ -364,21 +366,27 @@ const styles = StyleSheet.create({
   artImageCompact: { width: ART_SIZE_COMPACT, height: ART_SIZE_COMPACT },
   heroNameBadge: {
     position: 'absolute',
-    alignSelf: 'center',
-    top: '48%',
-    paddingHorizontal: 10,
-    paddingVertical: 3,
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  heroNameBadgeInner: {
+    paddingHorizontal: 14,
+    paddingVertical: 5,
     borderRadius: 999,
     backgroundColor: '#FFD60A',
     borderWidth: 2,
     borderColor: '#fff',
-    maxWidth: ART_SIZE * 0.36,
+    maxWidth: ART_SIZE * 0.5,
     shadowColor: '#000',
     shadowOpacity: 0.25,
     shadowRadius: 4,
     shadowOffset: { width: 0, height: 2 },
   },
-  heroNameText: { fontFamily: 'Viral-Black', fontSize: 11, color: '#111827', textAlign: 'center', letterSpacing: 0.5 },
+  heroNameText: { fontFamily: 'Viral-Black', fontSize: 14, color: '#111827', textAlign: 'center', letterSpacing: 0.5 },
   copyCard: { alignItems: 'center', paddingHorizontal: 10, marginTop: 8 },
   eyebrow: { color: '#FFD60A', fontSize: 11, fontFamily: 'Viral-Black', marginBottom: 10, letterSpacing: 2 },
   title: { color: '#fff', fontFamily: 'Viral-Black', fontSize: 26, lineHeight: 32, textAlign: 'center', marginBottom: 10 },
