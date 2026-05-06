@@ -148,27 +148,31 @@ export default function FriendsScreen() {
           </SurfaceBlur>
         </TouchableOpacity>
 
-        {/* Segmented tab bar */}
-        <View style={styles.segmentBar}>
-          {tabs.map((t) => {
-            const active = activeTab === t.key;
-            return (
-              <TouchableOpacity
-                key={t.key}
-                style={[styles.segment, active && styles.segmentActive]}
-                onPress={() => setActiveTab(t.key)}
-                activeOpacity={0.85}
-              >
-                <IconSymbol name={t.icon} size={14} color={active ? 'white' : 'rgba(255,255,255,0.55)'} />
-                <Text style={[styles.segmentText, active && styles.segmentTextActive]}>{t.label}</Text>
-                {typeof t.count === 'number' && t.count > 0 && (
-                  <View style={[styles.segmentCount, active && styles.segmentCountActive]}>
-                    <Text style={[styles.segmentCountText, active && styles.segmentCountTextActive]}>{t.count}</Text>
-                  </View>
-                )}
-              </TouchableOpacity>
-            );
-          })}
+        {/* Segmented tab bar — pill style matching Games screen */}
+        <View style={styles.libraryTabsContainer}>
+          <LiquidGlass variant="high" radius={30} style={styles.libraryTabsWrapperOuter} shadow>
+            <View style={styles.libraryTabsInner}>
+              {tabs.map((t) => {
+                const active = activeTab === t.key;
+                return (
+                  <TouchableOpacity
+                    key={t.key}
+                    style={[styles.libraryTab, active && styles.libraryTabActive]}
+                    onPress={() => setActiveTab(t.key)}
+                    activeOpacity={0.85}
+                  >
+                    <IconSymbol name={t.icon} size={14} color={active ? 'white' : 'rgba(255,255,255,0.6)'} weight="bold" />
+                    <Text style={active ? styles.libraryTabTextActive : styles.libraryTabText}>{t.label}</Text>
+                    {typeof t.count === 'number' && t.count > 0 && (
+                      <View style={[styles.segmentCount, active && styles.segmentCountActive]}>
+                        <Text style={[styles.segmentCountText, active && styles.segmentCountTextActive]}>{t.count}</Text>
+                      </View>
+                    )}
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </LiquidGlass>
         </View>
 
         {/* ── OFFLINE TAB ── */}
@@ -525,36 +529,46 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
 
-  // Segmented tabs
-  segmentBar: {
+  // Segmented tabs — pill style matching Games screen
+  libraryTabsContainer: {
     flexDirection: 'row',
-    backgroundColor: 'rgba(255,255,255,0.06)',
-    borderRadius: 14,
-    padding: 4,
-    marginBottom: 14,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.06)',
+    justifyContent: 'center',
+    marginBottom: 16,
   },
-  segment: {
+  libraryTabsWrapperOuter: {
+    borderRadius: 30,
+    padding: 4,
+    width: '100%',
+  },
+  libraryTabsInner: {
+    flexDirection: 'row',
+  },
+  libraryTab: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6,
     paddingVertical: 9,
-    borderRadius: 11,
+    paddingHorizontal: 10,
+    borderRadius: 20,
   },
-  segmentActive: {
-    backgroundColor: 'rgba(255,255,255,0.14)',
+  libraryTabActive: {
+    backgroundColor: 'rgba(10, 132, 255, 0.95)',
+    shadowColor: Colors.blue,
+    shadowOpacity: 0.45,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
   },
-  segmentText: {
-    color: 'rgba(255,255,255,0.55)',
-    fontSize: 13,
+  libraryTabText: {
+    color: 'rgba(255,255,255,0.6)',
+    fontSize: 12,
     fontWeight: '600',
   },
-  segmentTextActive: {
+  libraryTabTextActive: {
     color: 'white',
-    fontWeight: 'bold',
+    fontSize: 12,
+    fontWeight: '600',
   },
   segmentCount: {
     minWidth: 18,
