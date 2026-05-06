@@ -13,13 +13,13 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.imehdiamiri.8partyplay",
+      "bundleIdentifier": "com.playvirals",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
-      "package": "com.imehdiamiri.eightpartyplay",
+      "package": "com.playvirals",
       "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
