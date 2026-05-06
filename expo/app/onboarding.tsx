@@ -42,9 +42,9 @@ type PageIndex = 0 | 1 | 2 | 3;
 
 const ART = {
   bored: 'https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/gyy4cw0q1z7hha68b3m2o.png',
-  party: 'https://r2-pub.rork.com/generated-images/a1e2567b-9b78-475c-8fda-1f28dd857bcc.png',
-  portrait: 'https://r2-pub.rork.com/generated-images/28690dc8-d374-4867-8500-ad431193dad0.png',
-  hero: 'https://r2-pub.rork.com/generated-images/b2f343f8-cd5f-49e6-898a-43529c733277.png',
+  party: 'https://r2-pub.rork.com/generated-images/58eb863e-a8bb-4e45-a5e0-313428ca4ef2.png',
+  portrait: 'https://r2-pub.rork.com/generated-images/47f129bf-55ca-4dd6-9bdb-ba290360b41b.png',
+  hero: 'https://r2-pub.rork.com/generated-images/44c18d4b-7114-427c-a32c-1785714ad91b.png',
 } as const;
 
 function EnterStage({ active, delay = 0, children, style }: { active: boolean; delay?: number; children: React.ReactNode; style?: any }) {
