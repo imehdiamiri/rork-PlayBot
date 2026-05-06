@@ -1,6 +1,6 @@
 import { Colors } from '@/src/theme/Colors';
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { View, Text, StyleSheet, Animated, PanResponder, Dimensions, Pressable, Platform, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, Animated, PanResponder, Dimensions, Pressable, Platform } from 'react-native';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { CardCategory, CardCategoryInfo, ALL_CARDS, PartyCard } from '@/src/models/CardModels';
 
@@ -69,11 +69,15 @@ export function CardsDeckRenderer({ categoryId }: Props) {
       toValue: { x, y: 0 },
       duration: SWIPE_OUT_DURATION,
       useNativeDriver: false,
-    }).start(() => onSwipeComplete());
+    }).start(() => onSwipeComplete(direction));
   };
 
-  const onSwipeComplete = () => {
-    setCurrentIndex(prev => prev + 1);
+  const onSwipeComplete = (direction: 'left' | 'right') => {
+    if (direction === 'left') {
+      setCurrentIndex(prev => Math.min(prev + 1, deck.length));
+    } else {
+      setCurrentIndex(prev => Math.max(prev - 1, 0));
+    }
     position.setValue({ x: 0, y: 0 });
   };
 
@@ -105,12 +109,12 @@ export function CardsDeckRenderer({ categoryId }: Props) {
     outputRange: ['-12deg', '0deg', '12deg'],
   });
 
-  const likeOpacity = position.x.interpolate({
+  const prevOpacity = position.x.interpolate({
     inputRange: [0, SCREEN_WIDTH * 0.25],
     outputRange: [0, 1],
     extrapolate: 'clamp',
   });
-  const nopeOpacity = position.x.interpolate({
+  const nextOpacity = position.x.interpolate({
     inputRange: [-SCREEN_WIDTH * 0.25, 0],
     outputRange: [1, 0],
     extrapolate: 'clamp',
@@ -119,11 +123,7 @@ export function CardsDeckRenderer({ categoryId }: Props) {
   const renderFilters = () => {
     const content = (
       <View style={styles.filtersInner}>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.chipsScroll}
-        >
+        <View style={styles.chipsWrap}>
           <Pressable
             style={[styles.chip, !selectedSubtype && styles.chipActive]}
             onPress={() => setSelectedSubtype(null)}
@@ -142,7 +142,7 @@ export function CardsDeckRenderer({ categoryId }: Props) {
               </Pressable>
             );
           })}
-        </ScrollView>
+        </View>
 
         <View style={styles.divider} />
 
@@ -156,7 +156,6 @@ export function CardsDeckRenderer({ categoryId }: Props) {
             </View>
             <View>
               <Text style={[styles.spicyLabel, includeSpicy && styles.spicyLabelActive]}>Spicy</Text>
-              <Text style={styles.spicyHint}>Include 18+ cards</Text>
             </View>
           </View>
           <View style={[styles.toggleTrack, includeSpicy && styles.toggleTrackActive]}>
@@ -219,10 +218,10 @@ export function CardsDeckRenderer({ categoryId }: Props) {
             {...panResponder.panHandlers}
           >
             <CardFace card={card} category={category} />
-            <Animated.View style={[styles.stamp, styles.stampLike, { opacity: likeOpacity }]}>
-              <Text style={styles.stampText}>SAVE</Text>
+            <Animated.View style={[styles.stamp, styles.stampLike, { opacity: prevOpacity }]}>
+              <Text style={styles.stampText}>PREV</Text>
             </Animated.View>
-            <Animated.View style={[styles.stamp, styles.stampNope, { opacity: nopeOpacity }]}>
+            <Animated.View style={[styles.stamp, styles.stampNope, { opacity: nextOpacity }]}>
               <Text style={styles.stampText}>NEXT</Text>
             </Animated.View>
           </Animated.View>
@@ -352,11 +351,12 @@ const styles = StyleSheet.create({
   filtersInner: {
     gap: 10,
   },
-  chipsScroll: {
+  chipsWrap: {
     paddingHorizontal: 12,
-    gap: 8,
     flexDirection: 'row',
+    flexWrap: 'wrap',
     alignItems: 'center',
+    rowGap: 8,
   },
   chip: {
     paddingHorizontal: 14,
