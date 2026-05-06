@@ -61,12 +61,13 @@
 
 ## Phase 7 — Performance (incremental)
 - [x] `CardsDeckRenderer` — built a one-time `CARDS_BY_CATEGORY` index (888 cards) at module load so category filter changes no longer re-scan the whole deck. Memoized `categoryCards`/`availableSubtypes` so subtype/spicy toggles only re-filter the per-category slice.
+- [x] `cards/[categoryId].tsx` — lazy-load `CardsDeckRenderer` via `React.lazy` + `Suspense` so the 888-card deck module is only parsed when a deck is actually opened (not on first tab render).
 
 ## Validation
 - [x] runChecks passes after Phase 7 / 8 / 9 changes.
 
 ## Follow-ups (next sessions)
 - Phase 2 — admin website migration to Firebase Admin SDK (still on Supabase).
-- Phase 7 — animation engine consolidation (`Animated` → Reanimated), low-end Android profiling, lazy-load card decks behind `React.lazy` on the cards route.
+- Phase 7 — animation engine consolidation (`Animated` → Reanimated), low-end Android profiling.
 - Phase 8 — extract a shared `RoundHeader` and `SetupCard` primitive once 2+ games actually need them.
 - Set RC server secret: `firebase functions:secrets:set REVENUECAT_SECRET` and deploy updated `database.rules.json` (`firebase deploy --only database`).
