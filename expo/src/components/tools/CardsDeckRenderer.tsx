@@ -115,7 +115,7 @@ export function CardsDeckRenderer({ categoryId }: Props) {
   };
 
   const renderFilterContent = () => (
-    <>
+    <View style={styles.filterRow}>
       <View style={styles.subtypesRow}>
         <Pressable 
           style={[styles.chip, !selectedSubtype && styles.chipActive]}
@@ -133,16 +133,17 @@ export function CardsDeckRenderer({ categoryId }: Props) {
           </Pressable>
         ))}
       </View>
-      <View style={styles.togglesRow}>
-        <Pressable 
-          style={[styles.toggleButton, includeSpicy && styles.toggleButtonActive]}
-          onPress={() => setIncludeSpicy(!includeSpicy)}
-        >
-          <IconSymbol name="flame.fill" size={12} color={includeSpicy ? Colors.orange : 'rgba(255,255,255,0.5)'} />
-          <Text style={[styles.toggleText, includeSpicy && { color: Colors.orange }]}>Spicy</Text>
-        </Pressable>
-      </View>
-    </>
+      <Pressable 
+        style={[styles.spicyToggle, includeSpicy && styles.spicyToggleActive]}
+        onPress={() => setIncludeSpicy(!includeSpicy)}
+      >
+        <IconSymbol name="flame.fill" size={13} color={includeSpicy ? '#FFF' : 'rgba(255,255,255,0.55)'} />
+        <Text style={[styles.spicyText, includeSpicy && styles.spicyTextActive]}>Spicy</Text>
+        <View style={[styles.spicyTrack, includeSpicy && styles.spicyTrackActive]}>
+          <View style={[styles.spicyKnob, includeSpicy && styles.spicyKnobActive]} />
+        </View>
+      </Pressable>
+    </View>
   );
 
   const renderFilters = () => (
@@ -170,10 +171,12 @@ export function CardsDeckRenderer({ categoryId }: Props) {
       );
     }
 
+    const VISIBLE_BEHIND = 3;
     return deck.map((card, index) => {
-      if (index < currentIndex) return null;
+      const offset = index - currentIndex;
+      if (offset < 0 || offset > VISIBLE_BEHIND) return null;
 
-      if (index === currentIndex) {
+      if (offset === 0) {
         return (
           <Animated.View
             key={card.id}
@@ -185,11 +188,21 @@ export function CardsDeckRenderer({ categoryId }: Props) {
         );
       }
 
-      // Render the next card beneath it
+      // Render the next cards behind, peeking at the top so user knows the deck is swipeable
+      const scale = 1 - 0.04 * offset;
+      const top = -12 * offset;
       return (
         <Animated.View
           key={card.id}
-          style={[styles.cardStyle, { top: 10 * (index - currentIndex), scaleX: 1 - 0.05 * (index - currentIndex), zIndex: -index }]}
+          style={[
+            styles.cardStyle,
+            {
+              top,
+              transform: [{ scale }],
+              zIndex: 50 - offset,
+              opacity: 1 - 0.12 * offset,
+            },
+          ]}
         >
           <CardFace card={card} category={category} />
         </Animated.View>
@@ -205,17 +218,17 @@ export function CardsDeckRenderer({ categoryId }: Props) {
 
     return (
       <View style={styles.actionBar}>
-        <Pressable style={styles.actionButton} onPress={handleShuffle}>
-          <IconSymbol name="shuffle" size={24} color="white" />
-        </Pressable>
-        
         <Pressable style={styles.actionButton} onPress={handleSave}>
           <IconSymbol name={isSaved ? "bookmark.fill" : "bookmark"} size={24} color={isSaved ? category.accentColor : "white"} />
         </Pressable>
 
         <Pressable style={styles.nextButton} onPress={() => forceSwipe('left')}>
-          <Text style={styles.nextButtonText}>NEXT</Text>
+          <Text style={styles.nextButtonText}>Next</Text>
           <IconSymbol name="chevron.right" size={20} color="black" />
+        </Pressable>
+
+        <Pressable style={styles.actionButton} onPress={handleShuffle}>
+          <IconSymbol name="shuffle" size={24} color="white" />
         </Pressable>
       </View>
     );
@@ -267,7 +280,14 @@ const styles = StyleSheet.create({
     padding: 14,
     gap: 12,
   },
+  filterRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 10,
+  },
   subtypesRow: {
+    flex: 1,
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
@@ -291,28 +311,50 @@ const styles = StyleSheet.create({
   chipTextActive: {
     color: 'black',
   },
-  togglesRow: {
-    flexDirection: 'row',
-  },
-  toggleButton: {
+  spicyToggle: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 12,
+    gap: 8,
+    paddingLeft: 12,
+    paddingRight: 6,
     paddingVertical: 6,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderRadius: 22,
+    backgroundColor: 'rgba(255,255,255,0.06)',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
+    borderColor: 'rgba(255,255,255,0.1)',
   },
-  toggleButtonActive: {
-    backgroundColor: 'rgba(255, 149, 0, 0.15)',
-    borderColor: 'rgba(255, 149, 0, 0.4)',
+  spicyToggleActive: {
+    backgroundColor: 'rgba(255, 90, 50, 0.18)',
+    borderColor: 'rgba(255, 90, 50, 0.55)',
   },
-  toggleText: {
-    fontSize: 11,
-    fontWeight: 'bold',
-    color: 'rgba(255,255,255,0.6)',
+  spicyText: {
+    fontFamily: 'Viral-Black',
+    fontSize: 12,
+    color: 'rgba(255,255,255,0.65)',
+    letterSpacing: 0.4,
+  },
+  spicyTextActive: {
+    color: '#FFF',
+  },
+  spicyTrack: {
+    width: 30,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    padding: 2,
+    justifyContent: 'center',
+  },
+  spicyTrackActive: {
+    backgroundColor: Colors.orange,
+  },
+  spicyKnob: {
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    backgroundColor: '#FFF',
+  },
+  spicyKnobActive: {
+    transform: [{ translateX: 12 }],
   },
   deckContainer: {
     flex: 1,
@@ -321,12 +363,13 @@ const styles = StyleSheet.create({
   },
   cardStyle: {
     position: 'absolute',
-    width: '100%',
-    height: SCREEN_WIDTH * 1.3,
+    width: '90%',
+    alignSelf: 'center',
+    height: SCREEN_WIDTH * 1.15,
   },
   emptyDeck: {
-    width: '100%',
-    height: SCREEN_WIDTH * 1.3,
+    width: '90%',
+    height: SCREEN_WIDTH * 1.15,
     borderRadius: 26,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.08)',
@@ -395,11 +438,11 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   cardText: {
-    fontSize: 28,
-    fontWeight: 'bold',
+    fontFamily: 'Viral-Black',
+    fontSize: 26,
     color: '#111',
     textAlign: 'center',
-    lineHeight: 36,
+    lineHeight: 34,
   },
   watermark: {
     position: 'absolute',
@@ -435,9 +478,9 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   nextButtonText: {
-    fontFamily: 'Viral-Black',
-    fontSize: 16,
+    fontSize: 17,
+    fontWeight: '600',
     color: 'black',
-    letterSpacing: 1.5,
+    letterSpacing: 0.2,
   },
 });
