@@ -1,6 +1,6 @@
 import { Colors } from '@/src/theme/Colors';
-import React from 'react';
-import { View, Text, StyleSheet, Pressable, useWindowDimensions, Platform } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, Pressable, Platform, LayoutChangeEvent } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 
@@ -36,8 +36,8 @@ interface PartyToolsSectionProps {
 
 export function PartyToolsSection({ showsHeader = true }: PartyToolsSectionProps) {
   const router = useRouter();
-  const { width } = useWindowDimensions();
-  const columnWidth = Math.floor((width - 32 - 20) / 3); // padding 16*2 = 32, 2 gaps of 10 = 20
+  const [containerWidth, setContainerWidth] = useState<number>(0);
+  const columnWidth = containerWidth > 0 ? Math.floor((containerWidth - 20) / 3) : 0; // 2 gaps of 10 = 20
 
   const handlePress = (tool: PartyToolType) => {
     router.push(`/(tools)/${tool}` as any);
@@ -59,7 +59,7 @@ export function PartyToolsSection({ showsHeader = true }: PartyToolsSectionProps
   );
 
   return (
-    <View style={styles.container}>
+    <View style={styles.container} onLayout={(e: LayoutChangeEvent) => setContainerWidth(e.nativeEvent.layout.width)}>
       {showsHeader && (
         <View style={styles.header}>
           <IconSymbol name="wrench.and.screwdriver.fill" size={12} color="rgba(255,255,255,0.55)" weight="bold" />
@@ -68,7 +68,7 @@ export function PartyToolsSection({ showsHeader = true }: PartyToolsSectionProps
       )}
 
       <View style={styles.grid}>
-        {PARTY_TOOLS.map((tool) => (
+        {columnWidth > 0 && PARTY_TOOLS.map((tool) => (
           <Pressable 
             key={tool.id} 
             style={[{ width: columnWidth }, styles.cardContainer]} 

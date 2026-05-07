@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { StyleSheet, View, Text, ScrollView, TouchableOpacity, useWindowDimensions, Platform } from 'react-native';
+import { StyleSheet, View, Text, ScrollView, TouchableOpacity, Platform, LayoutChangeEvent } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -16,7 +16,7 @@ export default function GamesScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{ defaultTab?: string; resetAt?: string }>();
   const insets = useSafeAreaInsets();
-  const { width } = useWindowDimensions();
+  const [containerWidth, setContainerWidth] = useState<number>(0);
   const [selectedLibraryTab, setSelectedLibraryTab] = useState<'Games' | 'Ideas'>('Games');
   const [selectedModeFilter, setSelectedModeFilter] = useState<GameMode | null>(null);
 
@@ -30,12 +30,13 @@ export default function GamesScreen() {
     selectedModeFilter ? game.id.supportedModes.includes(selectedModeFilter) : true
   );
 
-  const columnWidth = (width - 32 - 12) / 2; // paddingHorizontal 16 * 2, gap 12
+  const effectiveWidth = containerWidth > 0 ? containerWidth : 0;
+  const columnWidth = effectiveWidth > 0 ? (effectiveWidth - 12) / 2 : 0; // gap 12
 
   return (
     <View style={styles.container}>
       <AppBackgroundView />
-      <ScrollView contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + 6, paddingBottom: 120 }]}>
+      <ScrollView contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + 6, paddingBottom: 120 }]} onLayout={(e: LayoutChangeEvent) => setContainerWidth(e.nativeEvent.layout.width - 32)}>
         <View style={styles.header}>
           <View style={{ flex: 1 }}>
             <Text style={styles.title}>PartyBot</Text>
@@ -115,7 +116,7 @@ export default function GamesScreen() {
 
             {/* Game Grid */}
             <View style={styles.gamesGrid}>
-              {filteredGames.map((game) => (
+              {columnWidth > 0 && filteredGames.map((game) => (
                 <View key={game.id.id} style={{ width: columnWidth }}>
                   <TouchableOpacity activeOpacity={0.8} onPress={() => router.push(`/game/${game.id.id}` as any)}>
                     <GameCardView game={game} />
