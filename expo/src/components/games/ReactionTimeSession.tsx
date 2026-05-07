@@ -12,8 +12,8 @@ interface Props { session: GameSession; }
 type Phase = 'ready' | 'waiting' | 'go' | 'tapped' | 'foul' | 'playerComplete' | 'results';
 
 const ATTEMPTS_PER_PLAYER = 3;
-const MIN_DELAY_MS = 1500;
-const MAX_DELAY_MS = 4500;
+const MIN_DELAY_MS = 3000;
+const MAX_DELAY_MS = 7000;
 
 interface Attempt {
   ms: number | null; // null = foul
@@ -146,15 +146,7 @@ export function ReactionTimeSession({ session }: Props) {
             <Text style={st.pillTx}>Are you ready?</Text>
           </View>
 
-          {isFirstPlayer ? (
-            <View style={st.rulesCard}>
-              <RuleRow num={1} color={Colors.red} text="When the screen turns RED, get ready — but don't tap yet!" />
-              <RuleRow num={2} color={Colors.green} text="Wait for the screen to turn GREEN, then tap as fast as you can." />
-              <RuleRow num={3} color="#5AC8FA" text="Your reaction time is measured in milliseconds — lower is better!" />
-              <RuleRow num={4} color={Colors.orange} text="If you tap too early (while red), it's a foul and that attempt scores zero." />
-              <RuleRow num={5} color="#AF52DE" text={`Each player gets ${ATTEMPTS_PER_PLAYER} attempts — the best time counts.`} />
-            </View>
-          ) : (
+          {!isFirstPlayer && (
             <View style={st.handoffCard}>
               <IconSymbol name="hand.raised.fill" size={22} color={Colors.cyan} />
               <Text style={st.handoffTx}>Pass the phone to {player?.displayName}. Tap below when you're ready to start your turn.</Text>
