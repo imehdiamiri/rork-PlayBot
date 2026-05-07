@@ -19,7 +19,6 @@ import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withTiming,
-  withSequence,
   Easing,
   runOnJS,
   cancelAnimation,
@@ -160,36 +159,30 @@ export default function WheelToolScreen() {
       tensionTimerRef.current = null;
     }
 
-    // Two-phase spin: a quick wind-up, then a long suspenseful slow-down.
-    // Aggressive ease-out makes the final slice unpredictable and dramatic.
-    const fastTurns = 6 + Math.floor(Math.random() * 3); // 6..8 fast turns
-    const slowExtra = 1.5 * 360 + Math.random() * 360; // 1.5..2.5 final turns
-    const fastDuration = 1500;
-    const slowDuration = 5500 + Math.floor(Math.random() * 1500); // 5.5..7s slow phase
-    const totalDuration = fastDuration + slowDuration;
+    // Single 10s spin: starts fast and gently eases into a near-still stop.
+    // bezier(0.05, 0.7, 0.1, 1) front-loads the velocity then trails off slowly
+    // for maximum suspense at the end.
+    const totalDuration = 10000;
+    const totalTurns = 8 + Math.random() * 3; // 8..11 full rotations across the spin
+    const extraAngle = Math.random() * 360; // random landing offset
+    const finalTarget = rotation.value + totalTurns * 360 + extraAngle;
 
-    const fastTarget = rotation.value + fastTurns * 360;
-    const finalTarget = fastTarget + slowExtra;
-
-    // Schedule the tension cue ~1.4s before stop, when slices visibly crawl.
+    // Tension cue ~2s before stop, when slices visibly crawl.
     tensionTimerRef.current = setTimeout(() => {
       AudioManager.play('countdownFinal');
-    }, totalDuration - 1400);
+    }, totalDuration - 2000);
 
-    rotation.value = withSequence(
-      withTiming(fastTarget, {
-        duration: fastDuration,
-        easing: Easing.in(Easing.cubic),
-      }),
-      withTiming(
-        finalTarget,
-        { duration: slowDuration, easing: Easing.out(Easing.exp) },
-        (finished) => {
-          if (finished) {
-            runOnJS(onSpinComplete)(finalTarget);
-          }
-        },
-      ),
+    rotation.value = withTiming(
+      finalTarget,
+      {
+        duration: totalDuration,
+        easing: Easing.bezier(0.05, 0.7, 0.1, 1),
+      },
+      (finished) => {
+        if (finished) {
+          runOnJS(onSpinComplete)(finalTarget);
+        }
+      },
     );
   };
 
@@ -316,9 +309,11 @@ export default function WheelToolScreen() {
           </View>
 
           {/* Pointer (top) — color tracks slice under pointer */}
-          <View style={[styles.pointer, { left: radius - 14 }]} pointerEvents="none">
+          <View style={[styles.pointer, { left: radius - 24 }]} pointerEvents="none">
+            <Animated.View style={[styles.pointerBase, pointerBaseAnimatedStyle]}>
+              <View style={styles.pointerInner} />
+            </Animated.View>
             <Animated.View style={[styles.pointerTriangle, pointerAnimatedStyle]} />
-            <Animated.View style={[styles.pointerBase, pointerBaseAnimatedStyle]} />
           </View>
         </View>
 
@@ -463,28 +458,46 @@ const styles = StyleSheet.create({
   },
   pointer: {
     position: 'absolute',
-    top: -6,
-    width: 28,
+    top: -18,
+    width: 48,
     alignItems: 'center',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.5,
+        shadowRadius: 6,
+      },
+      android: { elevation: 10 },
+      default: {},
+    }),
+  },
+  pointerBase: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'white',
+    borderWidth: 3,
+    borderColor: 'rgba(255,255,255,0.95)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  pointerInner: {
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    backgroundColor: 'rgba(0,0,0,0.85)',
   },
   pointerTriangle: {
     width: 0,
     height: 0,
-    borderLeftWidth: 14,
-    borderRightWidth: 14,
-    borderTopWidth: 22,
+    borderLeftWidth: 16,
+    borderRightWidth: 16,
+    borderTopWidth: 26,
     borderLeftColor: 'transparent',
     borderRightColor: 'transparent',
     borderTopColor: 'white',
-  },
-  pointerBase: {
-    width: 14,
-    height: 14,
-    borderRadius: 7,
-    backgroundColor: 'white',
-    marginTop: -6,
-    borderWidth: 2,
-    borderColor: 'rgba(0,0,0,0.25)',
+    marginTop: -4,
   },
   resultArea: {
     marginTop: 18,
