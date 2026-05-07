@@ -12,7 +12,7 @@ if (Platform.OS === 'ios') {
   try { BlurView = require('expo-blur').BlurView; } catch {}
 }
 
-export type PartyToolType = 'dice' | 'bottle' | 'hourglass' | 'coin' | 'teams';
+export type PartyToolType = 'dice' | 'bottle' | 'hourglass' | 'coin' | 'teams' | 'wheel';
 
 export interface PartyTool {
   id: PartyToolType;
@@ -28,6 +28,7 @@ export const PARTY_TOOLS: PartyTool[] = [
   { id: 'hourglass', title: 'Hourglass', subtitle: 'Set a timer', icon: 'hourglass', tint: Colors.cyan }, // cyan
   { id: 'coin', title: 'Coin Flip', subtitle: 'Heads or tails', icon: 'circle.circle.fill', tint: Colors.yellow }, // yellow
   { id: 'teams', title: 'Team Splitter', subtitle: 'Split into teams', icon: 'person.2.badge.gearshape.fill', tint: Colors.green }, // green
+  { id: 'wheel', title: 'Wheel', subtitle: 'Spin to decide', icon: 'arrow.triangle.2.circlepath', tint: '#AF52DE' }, // purple
 ];
 
 interface PartyToolsSectionProps {

@@ -33,6 +33,7 @@ export default function ToolsLayout() {
       <Stack.Screen name="hourglass" options={{ title: 'Hourglass' }} />
       <Stack.Screen name="coin" options={{ title: 'Coin Flip' }} />
       <Stack.Screen name="teams" options={{ title: 'Team Splitter' }} />
+      <Stack.Screen name="wheel" options={{ title: 'Wheel' }} />
     </Stack>
   );
 }
