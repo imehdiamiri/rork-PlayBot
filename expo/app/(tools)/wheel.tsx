@@ -212,12 +212,11 @@ export default function WheelToolScreen() {
     [sliceAngle, options.length],
   );
 
-  const pointerAnimatedStyle = useAnimatedStyle(() => {
+  const pointerTipAnimatedStyle = useAnimatedStyle(() => {
     const i = pointerColorIndex.value;
     if (i < 0 || i >= slices.length) {
       return { borderTopColor: 'white' as const };
     }
-    // interpolateColor with a 2-point [i, i] stop returns the color cleanly on UI thread.
     const color = interpolateColor(
       i,
       [i - 0.0001, i],
@@ -226,7 +225,7 @@ export default function WheelToolScreen() {
     return { borderTopColor: color };
   });
 
-  const pointerBaseAnimatedStyle = useAnimatedStyle(() => {
+  const pointerBodyAnimatedStyle = useAnimatedStyle(() => {
     const i = pointerColorIndex.value;
     if (i < 0 || i >= slices.length) {
       return { backgroundColor: 'white' as const };
@@ -353,14 +352,13 @@ export default function WheelToolScreen() {
             </View>
           </View>
 
-          {/* Pointer — inward-pointing arrow seated on the rim; color matches the slice under it */}
-          <Animated.View
-            style={[styles.pointerWrap, { left: radius - 22 }, pointerBaseAnimatedStyle]}
-            pointerEvents="none"
-          >
-            <Animated.View style={[styles.pointerArrow, pointerAnimatedStyle]} />
-            <View style={styles.pointerBolt} />
-          </Animated.View>
+          {/* Pointer — marker pin: rounded body up top, sharp triangle tip pointing down into the wheel */}
+          <View style={[styles.pointerWrap, { left: radius - 24 }]} pointerEvents="none">
+            <Animated.View style={[styles.pointerBody, pointerBodyAnimatedStyle]}>
+              <View style={styles.pointerHole} />
+            </Animated.View>
+            <Animated.View style={[styles.pointerTip, pointerTipAnimatedStyle]} />
+          </View>
         </View>
 
         {/* Result */}
@@ -545,18 +543,9 @@ const styles = StyleSheet.create({
   },
   pointerWrap: {
     position: 'absolute',
-    top: -14,
-    width: 44,
-    height: 72,
-    borderTopLeftRadius: 14,
-    borderTopRightRadius: 14,
-    borderBottomLeftRadius: 6,
-    borderBottomRightRadius: 6,
+    top: -18,
+    width: 48,
     alignItems: 'center',
-    justifyContent: 'flex-start',
-    paddingTop: 8,
-    borderWidth: 1.5,
-    borderColor: 'rgba(0,0,0,0.55)',
     ...Platform.select({
       ios: {
         shadowColor: '#000',
@@ -564,30 +553,37 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.55,
         shadowRadius: 8,
       },
-      android: { elevation: 12 },
+      android: { elevation: 14 },
       default: {},
     }),
   },
-  pointerArrow: {
-    position: 'absolute',
-    bottom: -22,
+  pointerBody: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: 'rgba(255,255,255,0.85)',
+  },
+  pointerHole: {
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    backgroundColor: 'rgba(0,0,0,0.45)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.6)',
+  },
+  pointerTip: {
+    marginTop: -2,
     width: 0,
     height: 0,
-    borderLeftWidth: 11,
-    borderRightWidth: 11,
-    borderTopWidth: 24,
+    borderLeftWidth: 16,
+    borderRightWidth: 16,
+    borderTopWidth: 26,
     borderLeftColor: 'transparent',
     borderRightColor: 'transparent',
     borderTopColor: 'white',
-  },
-  pointerBolt: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.75)',
-    marginTop: 6,
   },
   resultArea: {
     marginTop: 18,

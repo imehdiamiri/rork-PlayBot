@@ -166,7 +166,9 @@ export function ReactionTimeSession({ session }: Props) {
   if (phase === 'waiting') {
     return (
       <Pressable style={[st.fullPress, { backgroundColor: Colors.red }]} onPress={handleScreenPress}>
-        <Animated.View style={[st.fullCenter, pulseStyle]} pointerEvents="none" />
+        <Animated.View style={[st.fullCenter, pulseStyle]} pointerEvents="none">
+          <Text style={st.waitText}>Wait for green</Text>
+        </Animated.View>
         <View style={st.attemptBadge}>
           <Text style={st.attemptBadgeTx}>Attempt {attemptIdx + 1} / {ATTEMPTS_PER_PLAYER}</Text>
         </View>
@@ -439,6 +441,16 @@ const st = StyleSheet.create({
     fontStyle: 'italic',
   },
 
+  waitText: {
+    color: '#fff',
+    fontSize: 44,
+    fontWeight: '900',
+    letterSpacing: 1,
+    fontStyle: 'italic',
+    textShadowColor: 'rgba(0,0,0,0.3)',
+    textShadowOffset: { width: 0, height: 3 },
+    textShadowRadius: 8,
+  },
   attemptBadge: {
     position: 'absolute', top: 18, alignSelf: 'center',
     paddingHorizontal: 14, paddingVertical: 6,
