@@ -480,6 +480,22 @@ export async function listReports(opts: {
   return out.sort((a, b) => b.at - a.at);
 }
 
+export async function setReportStatus(
+  _admin: { uid: string; email?: string | null },
+  reportId: string,
+  status: "pending" | "reviewed"
+): Promise<void> {
+  if (!reportId) throw new Error("reportId required");
+  await rtdb().ref(`reports/${reportId}/status`).set(status);
+  await rtdb().ref("adminAuditLog").push({
+    actor: _admin.uid,
+    action: "setReportStatus",
+    reportId,
+    status,
+    at: Date.now(),
+  });
+}
+
 export async function listInvites(limit = 200) {
   const snap = await rtdb().ref("users").once("value");
   const usernames = new Map<string, string>();

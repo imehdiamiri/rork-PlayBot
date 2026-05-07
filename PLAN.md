@@ -283,3 +283,11 @@
 - App Store moderation surface complete: report/block reachable from real UI, admin queue exists.
 - `processedActions` bounded; no replay-after-host-migration regression.
 - Account deletion now leaves zero local trace.
+
+### Phase L14 — Bundle-clean RC1
+- [x] **Gemini key (verified gone)**: deleted `EXPO_PUBLIC_GEMINI_API_KEY` from `expo/.env`; only a comment remains explaining why it must never come back. The leaked key (`AIza…vevGQ`) must be rotated in Google AI Studio.
+- [x] **`check-env.js` actually runs**: `expo/metro.config.js` now `require`s `./scripts/check-env.js` at config load, so every `expo start`, local build, and EAS bundling pass executes the guard before any client JS is produced. Also exposed it as `expo/scripts/check-env.js` (Firebase Web API key allowlisted to avoid false positives).
+- [x] **`turnData` validator hardened**: `database.rules.json` now requires `turnData` to be either a string ≤ 16 KB OR an object whose JSON serialization is ≤ 16 KB (bare scalars rejected). Caps room griefing + RTDB cost abuse from oversized nested payloads.
+- [x] **Final missing rate limits**: `claimDailyReward` (10/h), `ensureInviteCode` (30/h), `syncRevenueCat` (30/h), `unblockUser` (60/h) now go through the existing `rateLimit()` helper in `functions/index.js`.
+- [x] **Admin reports `reviewed` toggle**: `actionSetReportStatus` server action + `setReportStatus` data helper added (`website/lib/{actions,data}.ts`); the status pill on `website/app/admin/reports/page.tsx` is now a submit button that flips pending↔reviewed and writes an `adminAuditLog` entry.
+- Note: room-creation / telemetry / multiplayer-action throttling still relies on RTDB rules (size + ownership) since those writes don't pass through Cloud Functions. Documented as acceptable for current scale; revisit if telemetry volume spikes.

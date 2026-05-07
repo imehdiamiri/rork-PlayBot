@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { requireAdmin } from "@/lib/auth";
 import { listReports, type ReportRow } from "@/lib/data";
+import { actionSetReportStatus } from "@/lib/actions";
 
 /**
  * Admin moderation queue. Lists raw user reports with the reporter, target,
@@ -114,15 +115,27 @@ export default async function ReportsPage({
                     {r.context || <span className="text-gray-400">—</span>}
                   </td>
                   <td className="p-3">
-                    <span
-                      className={`px-2 py-0.5 rounded text-xs ${
-                        r.status === "reviewed"
-                          ? "bg-green-100 text-green-800"
-                          : "bg-yellow-100 text-yellow-800"
-                      }`}
+                    <form
+                      action={async () => {
+                        "use server";
+                        await actionSetReportStatus(
+                          r.id,
+                          r.status === "reviewed" ? "pending" : "reviewed"
+                        );
+                      }}
                     >
-                      {r.status}
-                    </span>
+                      <button
+                        type="submit"
+                        className={`px-2 py-0.5 rounded text-xs ${
+                          r.status === "reviewed"
+                            ? "bg-green-100 text-green-800"
+                            : "bg-yellow-100 text-yellow-800"
+                        }`}
+                        title={r.status === "reviewed" ? "Mark as pending" : "Mark as reviewed"}
+                      >
+                        {r.status}
+                      </button>
+                    </form>
                   </td>
                 </tr>
               ))

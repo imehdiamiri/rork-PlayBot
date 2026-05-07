@@ -12,6 +12,7 @@ import {
   deleteConfig,
   createAnnouncement,
   setAnnouncementActive,
+  setReportStatus,
 } from "./data";
 
 export async function actionAdjustStars(userId: string, delta: number, reason: string) {
@@ -71,6 +72,15 @@ export async function actionToggleAnnouncement(id: string, active: boolean) {
   const admin = await requireAdmin();
   await setAnnouncementActive(admin, id, active);
   revalidatePath("/admin/announcements");
+}
+
+export async function actionSetReportStatus(
+  reportId: string,
+  status: "pending" | "reviewed"
+) {
+  const admin = await requireAdmin();
+  await setReportStatus(admin, reportId, status);
+  revalidatePath("/admin/reports");
 }
 
 export async function actionSignOut() {

@@ -52,7 +52,11 @@ function checkEnvText(label, text) {
       errors.push(`${label}: any EXPO_PUBLIC_GEMINI* variable is forbidden ("${key}"). Move it server-side.`);
     }
 
-    if (key.startsWith('EXPO_PUBLIC_')) {
+    // Firebase Web API keys are public-by-design (locked down via API
+    // restrictions + RTDB/Firestore rules) so allow them through the
+    // Google-API-key shape check.
+    const isFirebaseWebKey = key === 'EXPO_PUBLIC_FIREBASE_API_KEY';
+    if (key.startsWith('EXPO_PUBLIC_') && !isFirebaseWebKey) {
       for (const pat of FORBIDDEN_VALUE_PATTERNS) {
         if (pat.regex.test(value)) {
           errors.push(`${label}: ${key} value matches ${pat.name} pattern. Public env vars are bundled into the client.`);

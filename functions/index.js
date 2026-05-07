@@ -198,6 +198,7 @@ exports.recordHostMigration = onCall({ cors: true }, async (request) => {
 exports.claimDailyReward = onCall({ cors: true }, async (request) => {
   const uid = request.auth?.uid;
   if (!uid) throw new HttpsError('unauthenticated', 'Sign in required.');
+  await rateLimit(uid, 'claimDailyReward', 10, 60 * 60 * 1000);
 
   const today = new Date().toISOString().split('T')[0];
   const walletRef = admin.database().ref(`users/${uid}/wallet`);
@@ -314,6 +315,7 @@ exports.redeemInvite = onCall({ cors: true }, async (request) => {
 exports.ensureInviteCode = onCall({ cors: true }, async (request) => {
   const uid = request.auth?.uid;
   if (!uid) throw new HttpsError('unauthenticated', 'Sign in required.');
+  await rateLimit(uid, 'ensureInviteCode', 30, 60 * 60 * 1000);
 
   const ref = admin.database().ref(`users/${uid}/inviteCode`);
   const snap = await ref.once('value');
@@ -333,6 +335,7 @@ exports.syncRevenueCat = onCall(
   async (request) => {
     const uid = request.auth?.uid;
     if (!uid) throw new HttpsError('unauthenticated', 'Sign in required.');
+    await rateLimit(uid, 'syncRevenueCat', 30, 60 * 60 * 1000);
 
     const secret = REVENUECAT_SECRET.value();
     if (!secret) {
@@ -557,6 +560,7 @@ exports.blockUser = onCall({ cors: true }, async (request) => {
 exports.unblockUser = onCall({ cors: true }, async (request) => {
   const uid = request.auth?.uid;
   if (!uid) throw new HttpsError('unauthenticated', 'Sign in required.');
+  await rateLimit(uid, 'unblockUser', 60, 60 * 60 * 1000);
   const targetUid = String(request.data?.targetUid || '').trim();
   if (!targetUid) throw new HttpsError('invalid-argument', 'Invalid target.');
   await admin.database().ref(`blockedUsers/${uid}/${targetUid}`).remove();
