@@ -166,11 +166,7 @@ export function ReactionTimeSession({ session }: Props) {
   if (phase === 'waiting') {
     return (
       <Pressable style={[st.fullPress, { backgroundColor: Colors.red }]} onPress={handleScreenPress}>
-        <Animated.View style={[st.fullCenter, pulseStyle]}>
-          <IconSymbol name="hand.raised.fill" size={72} color="rgba(255,255,255,0.95)" />
-          <Text style={st.bigText}>Wait…</Text>
-          <Text style={st.bigSub}>Tap when it turns GREEN</Text>
-        </Animated.View>
+        <Animated.View style={[st.fullCenter, pulseStyle]} pointerEvents="none" />
         <View style={st.attemptBadge}>
           <Text style={st.attemptBadgeTx}>Attempt {attemptIdx + 1} / {ATTEMPTS_PER_PLAYER}</Text>
         </View>
@@ -183,8 +179,7 @@ export function ReactionTimeSession({ session }: Props) {
     return (
       <Pressable style={[st.fullPress, { backgroundColor: Colors.green }]} onPress={handleScreenPress}>
         <View style={st.fullCenter}>
-          <IconSymbol name="hand.tap.fill" size={88} color="#fff" />
-          <Text style={st.bigText}>TAP!</Text>
+          <Text style={st.megaText}>TAP!</Text>
         </View>
       </Pressable>
     );
@@ -433,6 +428,16 @@ const st = StyleSheet.create({
   fullCenter: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12 },
   bigText: { color: '#fff', fontSize: 56, fontWeight: '900', letterSpacing: 1 },
   bigSub: { color: 'rgba(255,255,255,0.85)', fontSize: 16, fontWeight: '600' },
+  megaText: {
+    color: '#fff',
+    fontSize: 132,
+    fontWeight: '900',
+    letterSpacing: 4,
+    textShadowColor: 'rgba(0,0,0,0.35)',
+    textShadowOffset: { width: 0, height: 4 },
+    textShadowRadius: 12,
+    fontStyle: 'italic',
+  },
 
   attemptBadge: {
     position: 'absolute', top: 18, alignSelf: 'center',
