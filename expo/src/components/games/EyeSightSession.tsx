@@ -4,6 +4,7 @@ import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing } from '
 import { Colors } from '@/src/theme/Colors';
 import { GameSession } from '@/src/store/useGameStore';
 import { IconSymbol } from '@/components/ui/icon-symbol';
+import { Delete, Check } from 'lucide-react-native';
 import { ResultsScoreboard, RankEntry } from './ResultsScoreboard';
 import * as Haptics from '@/src/utils/safeHaptics';
 
@@ -559,7 +560,7 @@ function NumberPad({ onDigit, onDelete, onSubmit, canSubmit }: NumberPadProps) {
             if (cell === 'del') {
               return (
                 <Pressable key="del" onPress={onDelete} style={[st.padKey, st.padKeyDim]}>
-                  <IconSymbol name="delete.left.fill" size={22} color="#fff" />
+                  <Delete size={26} color="#fff" strokeWidth={2.2} />
                 </Pressable>
               );
             }
@@ -576,7 +577,7 @@ function NumberPad({ onDigit, onDelete, onSubmit, canSubmit }: NumberPadProps) {
                     },
                   ]}
                 >
-                  <IconSymbol name="checkmark" size={24} color="#fff" />
+                  <Check size={28} color="#fff" strokeWidth={3} />
                 </Pressable>
               );
             }
