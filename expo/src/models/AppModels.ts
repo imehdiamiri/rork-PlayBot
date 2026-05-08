@@ -62,7 +62,7 @@ export const Games: Record<string, GameType> = {
     symbolName: 'backward.fill', // SF: backward.fill
     supportedModes: [GameMode.singleDevice],
     roundDuration: 75,
-    heroImageURL: 'https://r2-pub.rork.com/generated-images/c79b67d6-4227-497f-ac8b-2b5ae957f482.png',
+    heroImageURL: 'https://r2-pub.rork.com/generated-images/fbe0ce0c-3245-4685-ba8d-50126522338a.png',
   },
   guessTheSeconds: {
     id: 'guess_the_seconds',
@@ -78,7 +78,7 @@ export const Games: Record<string, GameType> = {
     // Real multiplayer is implemented via useGameSync (host-authoritative reducer).
     supportedModes: [GameMode.singleDevice, GameMode.multiDevice],
     roundDuration: 90,
-    heroImageURL: 'https://r2-pub.rork.com/generated-images/3c1a229e-631c-4cc9-992f-c2fcc9ff2042.png',
+    heroImageURL: 'https://r2-pub.rork.com/generated-images/d74c9bf0-5a5b-488c-b948-be29d9578883.png',
   },
   tenTangle: {
     id: 'ten_tangle',
@@ -93,7 +93,7 @@ export const Games: Record<string, GameType> = {
     symbolName: 'theatermasks.fill', // SF: theatermasks.fill
     supportedModes: [GameMode.singleDevice],
     roundDuration: 0,
-    heroImageURL: 'https://r2-pub.rork.com/generated-images/e4e1fe0b-b90e-448c-8931-19e0d5a14d2e.png',
+    heroImageURL: 'https://r2-pub.rork.com/generated-images/91dad0d4-4e84-45b3-8bf9-1a4162d6986d.png',
   },
   imposter: {
     id: 'imposter',
@@ -108,7 +108,7 @@ export const Games: Record<string, GameType> = {
     symbolName: 'eye.fill', // SF: eye.fill
     supportedModes: [GameMode.singleDevice],
     roundDuration: 0,
-    heroImageURL: 'https://r2-pub.rork.com/generated-images/dcf026c3-8a22-42f7-ba95-09f14ff49a3c.png',
+    heroImageURL: 'https://r2-pub.rork.com/generated-images/abbe33ab-9442-43d7-83c8-17cbfbfe1ec0.png',
   },
   memoryGrid: {
     id: 'memory_grid',
@@ -125,7 +125,7 @@ export const Games: Record<string, GameType> = {
     // to stop advertising fake flows.
     supportedModes: [GameMode.singleDevice, GameMode.multiDevice],
     roundDuration: 0,
-    heroImageURL: 'https://r2-pub.rork.com/generated-images/9dc2b374-b122-4384-9206-38ed6ec8c147.png',
+    heroImageURL: 'https://r2-pub.rork.com/generated-images/4df1419e-9dec-4e44-9fea-4b89219a8bb1.png',
   },
   memoryPath: {
     id: 'memory_path',
@@ -141,7 +141,7 @@ export const Games: Record<string, GameType> = {
     // Single-device only until proper multi-device sync ships.
     supportedModes: [GameMode.singleDevice],
     roundDuration: 0,
-    heroImageURL: 'https://r2-pub.rork.com/generated-images/8ce364b4-43c8-40c8-bf2b-61df1d510ad7.png',
+    heroImageURL: 'https://r2-pub.rork.com/generated-images/19949a53-ba04-400e-974a-58a8394e0ad3.png',
   },
   tapInOrder: {
     id: 'tap_in_order',
@@ -157,7 +157,7 @@ export const Games: Record<string, GameType> = {
     // Single-device only — multi-device sync not implemented for this game.
     supportedModes: [GameMode.singleDevice],
     roundDuration: 0,
-    heroImageURL: null,
+    heroImageURL: 'https://r2-pub.rork.com/generated-images/8e4ee454-2d44-46e7-9a28-c61f30c6a8be.png',
   },
   colorTrap: {
     id: 'color_trap',
@@ -173,7 +173,7 @@ export const Games: Record<string, GameType> = {
     // Single-device only — multi-device sync not implemented for this game.
     supportedModes: [GameMode.singleDevice],
     roundDuration: 0,
-    heroImageURL: null,
+    heroImageURL: 'https://r2-pub.rork.com/generated-images/214d9831-ddee-4135-ac02-ab564146232d.png',
   },
   passGuess: {
     id: 'pass_guess',
@@ -188,7 +188,7 @@ export const Games: Record<string, GameType> = {
     symbolName: 'text.bubble.fill', // SF: text.bubble.fill
     supportedModes: [GameMode.singleDevice],
     roundDuration: 0,
-    heroImageURL: 'https://r2-pub.rork.com/generated-images/320ededb-cec7-4fa6-8da4-3cce67685fea.png',
+    heroImageURL: 'https://r2-pub.rork.com/generated-images/51b38902-55c2-4fd8-8c87-a327edf4f79b.png',
   },
   spinBottle: {
     id: 'spin_bottle',
@@ -218,7 +218,7 @@ export const Games: Record<string, GameType> = {
     symbolName: 'bolt.fill',
     supportedModes: [GameMode.singleDevice],
     roundDuration: 0,
-    heroImageURL: null,
+    heroImageURL: 'https://r2-pub.rork.com/generated-images/40580beb-1d0a-46b3-894c-d464e14c3efc.png',
   },
   drawRush: {
     id: 'draw_rush',
@@ -235,7 +235,7 @@ export const Games: Record<string, GameType> = {
     // and was removed from supported modes to avoid dead lobby flows.
     supportedModes: [GameMode.singleDevice],
     roundDuration: 100,
-    heroImageURL: null,
+    heroImageURL: 'https://r2-pub.rork.com/generated-images/7a36aada-6b47-4c8e-8403-4ef8c7367d64.png',
   },
 };
 

@@ -36,10 +36,10 @@ const PAGES = [0, 1, 2, 3] as const;
 type PageIndex = 0 | 1 | 2 | 3;
 
 const ART = {
-  bored: 'https://r2-pub.rork.com/generated-images/ba33a05c-abff-486d-9e1d-0d3ed5f83aed.png',
-  party: 'https://r2-pub.rork.com/generated-images/66b3a840-d10e-4a87-9f3b-289a24ad85a3.png',
-  portrait: 'https://r2-pub.rork.com/generated-images/7e778e35-51c7-4377-8b20-29bb47f98f1a.png',
-  hero: 'https://r2-pub.rork.com/generated-images/8c8fd684-25b2-46f3-a9fc-1c50dd368d01.png',
+  bored: 'https://r2-pub.rork.com/generated-images/887d480d-37d8-4646-b306-8531133f8237.png',
+  party: 'https://r2-pub.rork.com/generated-images/195f16b6-497b-4089-8f5c-fc7982e30b38.png',
+  portrait: 'https://r2-pub.rork.com/generated-images/76517523-6ca3-46d5-b2d1-012f8813e451.png',
+  hero: 'https://r2-pub.rork.com/generated-images/d2aaae07-e8bd-4bd3-8d7e-4e266773cff7.png',
 } as const;
 
 const INK = '#111111';
