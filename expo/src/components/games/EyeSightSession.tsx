@@ -221,7 +221,7 @@ export function EyeSightSession({ session }: Props) {
             keyboardType="number-pad"
             autoFocus
             maxLength={config.digits + 2}
-            placeholder="•".repeat(config.digits)
+            placeholder={'•'.repeat(config.digits)}
             placeholderTextColor="rgba(255,255,255,0.25)"
             returnKeyType="done"
             onSubmitEditing={submitAnswer}
