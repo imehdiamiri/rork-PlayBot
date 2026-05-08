@@ -173,6 +173,10 @@ const styles = StyleSheet.create({
     fontSize: 25,
     color: 'white',
   },
+  logo: {
+    width: 150,
+    height: 36,
+  },
   joinButton: {
     flexDirection: 'row',
     alignItems: 'center',

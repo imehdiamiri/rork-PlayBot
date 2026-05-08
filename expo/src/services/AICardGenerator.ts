@@ -148,4 +148,12 @@ export const CATEGORY_SUBTYPES: Record<CardCategory, CardSubtype[]> = {
   [CardCategory.Challenges]: [CardSubtype.Speech, CardSubtype.Behavior, CardSubtype.Timelimit],
   [CardCategory.Penalty]: [CardSubtype.Penaltyfunny, CardSubtype.Embarrassing, CardSubtype.Groupchoice],
   [CardCategory.Couple]: [CardSubtype.Couplequestions, CardSubtype.Dynamics, CardSubtype.Playful],
+  [CardCategory.MostLikelyTo]: [
+    CardSubtype.MLTFunny,
+    CardSubtype.MLTEmbarrassing,
+    CardSubtype.MLTAdventurous,
+    CardSubtype.MLTRomantic,
+    CardSubtype.MLTSpicy,
+    CardSubtype.MLTFutureSuccess,
+  ],
 };
