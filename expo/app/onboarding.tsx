@@ -266,7 +266,10 @@ export default function OnboardingScreen() {
             {THEMES.map((theme, i) => (
               <View key={i} style={[styles.page, { paddingTop: insets.top + 16 }]}>
                 <View style={styles.brandRow}>
-                  <Image source={{ uri: PARTYBOT_LOGO_URL }} style={styles.brandLogo} resizeMode="contain" />
+                  <View style={styles.brandLogo} accessibilityLabel="PartyBot">
+                    <Text style={[styles.brandLogoText, styles.brandLogoParty]}>Party</Text>
+                    <Text style={[styles.brandLogoText, styles.brandLogoBot]}>Bot</Text>
+                  </View>
                   {i < 3 && (
                     <Pressable onPress={() => goToPage(3)} hitSlop={12} style={styles.skipBtn}>
                       <Text style={styles.skipText}>Skip</Text>
@@ -412,7 +415,18 @@ const styles = StyleSheet.create({
   page: { width: SCREEN_WIDTH, flex: 1, paddingHorizontal: 24, paddingBottom: 200, alignItems: 'center', justifyContent: 'flex-start' },
 
   brandRow: { width: '100%', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
-  brandLogo: { width: 110, height: 44 },
+  brandLogo: { width: 132, height: 46, flexDirection: 'row', alignItems: 'center', transform: [{ rotate: '-2deg' }] },
+  brandLogoText: {
+    fontFamily: 'Viral-Black',
+    fontSize: 33,
+    lineHeight: 40,
+    letterSpacing: 0.8,
+    textShadowColor: '#06101F',
+    textShadowOffset: { width: 3, height: 4 },
+    textShadowRadius: 0,
+  },
+  brandLogoParty: { color: '#FF1B86' },
+  brandLogoBot: { color: '#58F000', marginLeft: 2 },
   skipBtn: { paddingHorizontal: 12, paddingVertical: 8 },
   skipText: { color: 'rgba(255,255,255,0.55)', fontSize: 14, fontWeight: '600' },
 
