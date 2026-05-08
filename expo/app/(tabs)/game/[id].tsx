@@ -113,7 +113,28 @@ export default function GameDetailScreen() {
               end={{ x: 1, y: 1 }}
               style={StyleSheet.absoluteFillObject}
             />
-            <IconSymbol name={game.symbolName as any} size={72} color="white" />
+            {game.heroImageURL ? (
+              <>
+                <Image
+                  source={{ uri: game.heroImageURL }}
+                  style={StyleSheet.absoluteFillObject}
+                  resizeMode="cover"
+                />
+                <LinearGradient
+                  colors={['rgba(0,0,0,0)', 'rgba(0,0,0,0.55)']}
+                  start={{ x: 0.5, y: 0.4 }}
+                  end={{ x: 0.5, y: 1 }}
+                  style={StyleSheet.absoluteFillObject}
+                  pointerEvents="none"
+                />
+                <View style={styles.heroBadge}>
+                  <IconSymbol name={game.symbolName as any} size={20} color="white" />
+                  <Text style={styles.heroBadgeText} numberOfLines={1}>{game.name}</Text>
+                </View>
+              </>
+            ) : (
+              <IconSymbol name={game.symbolName as any} size={72} color="white" />
+            )}
           </View>
         </View>
 
@@ -306,6 +327,27 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  heroBadge: {
+    position: 'absolute',
+    left: 14,
+    bottom: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 999,
+    backgroundColor: 'rgba(0,0,0,0.45)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.18)',
+    maxWidth: '80%',
+  },
+  heroBadgeText: {
+    color: 'white',
+    fontFamily: 'Viral-Black',
+    fontSize: 14,
+    letterSpacing: 0.3,
   },
   section: {
     gap: 10,
