@@ -27,6 +27,7 @@ admin.initializeApp();
 
 const GEMINI_API_KEY = defineSecret('GEMINI_API_KEY');
 const REVENUECAT_SECRET = defineSecret('REVENUECAT_SECRET');
+const BOOTSTRAP_ADMIN_TOKEN = defineSecret('BOOTSTRAP_ADMIN_TOKEN');
 const GEMINI_MODEL = 'gemini-2.0-flash';
 const FREE_DAILY_LIMIT = 5;
 const DAILY_REWARD = 5;
@@ -662,3 +663,65 @@ exports.deleteAccount = onCall({ cors: true }, async (request) => {
 
   return { ok: true };
 });
+
+// ──────────────────────── bootstrapFirstAdmin ────────────────────────
+
+/**
+ * One-shot bootstrap for the first admin user.
+ *
+ * Security model:
+ *   - Caller must be authenticated.
+ *   - Caller must present the BOOTSTRAP_ADMIN_TOKEN secret value.
+ *   - `meta/bootstrap/firstAdminUid` is a transactional gate: once written it
+ *     is never overwritten, so this callable becomes a permanent no-op after
+ *     the first successful run.
+ *   - On success the caller gets `admin: true` custom claim and
+ *     `users/$uid/isAdmin = true` (read by the admin website).
+ *
+ * After bootstrap, destroy the secret to disable the function entirely:
+ *   firebase functions:secrets:destroy BOOTSTRAP_ADMIN_TOKEN
+ */
+exports.bootstrapFirstAdmin = onCall(
+  { secrets: [BOOTSTRAP_ADMIN_TOKEN], cors: true },
+  async (request) => {
+    const uid = request.auth?.uid;
+    if (!uid) throw new HttpsError('unauthenticated', 'Sign in required.');
+    await rateLimit(uid, 'bootstrapFirstAdmin', 5, 60 * 60 * 1000);
+
+    const provided = (request.data || {}).token;
+    let expected = '';
+    try { expected = BOOTSTRAP_ADMIN_TOKEN.value(); } catch { expected = ''; }
+    if (!expected) {
+      throw new HttpsError(
+        'failed-precondition',
+        'Bootstrap is disabled (no token configured).'
+      );
+    }
+    if (typeof provided !== 'string' || provided.length < 16 || provided !== expected) {
+      throw new HttpsError('permission-denied', 'Invalid bootstrap token.');
+    }
+
+    const gateRef = admin.database().ref('meta/bootstrap/firstAdminUid');
+    const txn = await gateRef.transaction((cur) => (cur ? undefined : uid));
+    if (!txn.committed || txn.snapshot.val() !== uid) {
+      throw new HttpsError(
+        'already-exists',
+        'First admin already bootstrapped. This function is now disabled.'
+      );
+    }
+
+    await admin.auth().setCustomUserClaims(uid, { admin: true });
+    await admin.database().ref(`users/${uid}/isAdmin`).set(true);
+    await admin.database().ref('adminAuditLog').push({
+      action: 'bootstrapFirstAdmin',
+      uid,
+      ts: admin.database.ServerValue.TIMESTAMP,
+    });
+
+    return {
+      ok: true,
+      uid,
+      note: 'Sign out and back in for the admin claim to refresh on clients.',
+    };
+  }
+);
